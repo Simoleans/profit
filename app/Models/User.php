@@ -13,14 +13,35 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
+     * Get the name of the unique identifier for the user.
+     *
+     * @return string
+     */
+    public function getAuthIdentifierName()
+    {
+        return 'co_ven';
+    }
+
+    /**
+     * Get the column name for the "username".
+     *
+     * @return string
+     */
+    public function username()
+    {
+        return 'co_ven';
+    }
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
     protected $fillable = [
+        'co_ven',
         'name',
-        'email',
         'password',
+        'rol'
     ];
 
     /**

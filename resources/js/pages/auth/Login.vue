@@ -19,7 +19,7 @@ defineProps<{
 </script>
 
 <template>
-    <AuthBase title="Inicia sesión en tu cuenta" description="Ingresa tu email y contraseña para iniciar sesión">
+    <AuthBase title="Inicia sesión en tu cuenta" description="Ingresa tu código de vendedor y contraseña para iniciar sesión">
         <Head title="Iniciar Sesión" />
 
         <div v-if="status" class="mb-4 text-center text-sm font-medium text-green-600">
@@ -34,18 +34,18 @@ defineProps<{
         >
             <div class="grid gap-6">
                 <div class="grid gap-2">
-                    <Label for="email">Dirección de email</Label>
+                    <Label for="co_ven">Código de Vendedor</Label>
                     <Input
-                        id="email"
-                        type="email"
-                        name="email"
+                        id="co_ven"
+                        type="text"
+                        name="co_ven"
                         required
                         autofocus
                         :tabindex="1"
-                        autocomplete="email"
-                        placeholder="email@ejemplo.com"
+                        autocomplete="username"
+                        placeholder="VEN001"
                     />
-                    <InputError :message="errors.email" />
+                    <InputError :message="errors.co_ven" />
                 </div>
 
                 <div class="grid gap-2">
