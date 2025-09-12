@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ArticleController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -17,6 +18,8 @@ Route::resource('users', UserController::class)->middleware(['auth', 'verified']
 Route::get('search-seller', [UserController::class, 'searchSeller'])->middleware(['auth', 'verified'])->name('search.seller');
 
 Route::resource('clients', ClientController::class)->middleware(['auth', 'verified'])->names('clients');
+
+Route::resource('articles', ArticleController::class)->middleware(['auth', 'verified'])->names('articles');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

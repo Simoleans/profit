@@ -6,7 +6,7 @@ import { dashboard } from '@/routes';
 import { index as clientsIndex } from '@/routes/clients';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { LayoutGrid, Users, UserCheck } from 'lucide-vue-next';
+import { LayoutGrid, Users, UserCheck, Package } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -24,6 +24,11 @@ const mainNavItems: NavItem[] = [
         title: 'Mis Clientes',
         href: clientsIndex.url(),
         icon: UserCheck,
+    },
+    {
+        title: 'Artículos',
+        href: '/articles',
+        icon: Package,
     },
 ];
 </script>
