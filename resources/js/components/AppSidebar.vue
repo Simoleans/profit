@@ -6,7 +6,7 @@ import { dashboard } from '@/routes';
 import { index as clientsIndex } from '@/routes/clients';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { LayoutGrid, Users, UserCheck, Package } from 'lucide-vue-next';
+import { LayoutGrid, Users, UserCheck, Package, ShoppingCart } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -29,6 +29,11 @@ const mainNavItems: NavItem[] = [
         title: 'Artículos',
         href: '/articles',
         icon: Package,
+    },
+    {
+        title: 'Pedidos',
+        href: '/orders',
+        icon: ShoppingCart,
     },
 ];
 </script>

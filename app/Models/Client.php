@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Client extends Model
 {
     protected $connection = 'sqlsrv';
-    protected $table = 'dbo.clientes';
+    protected $table = 'clientes';
     protected $primaryKey = 'co_cli';
     public $timestamps = false;
     public $incrementing = false;

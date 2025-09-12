@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Article extends Model
 {
     protected $connection = 'sqlsrv';
-    protected $table = 'dbo.art';
+    protected $table = 'art';
     protected $primaryKey = 'co_art';
     public $timestamps = false;
     public $incrementing = false;

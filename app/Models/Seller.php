@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Seller extends Model
 {
     protected $connection = 'sqlsrv';
-    protected $table = 'dbo.vendedor';
+    protected $table = 'vendedor';
     protected $primaryKey = 'co_ven';
     public $timestamps = false;
     public $incrementing = false;
