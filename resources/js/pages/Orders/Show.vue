@@ -50,9 +50,9 @@ const getStatusText = (status, anulada) => {
 }
 
 const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('es-VE', {
+    return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'VES'
+        currency: 'USD'
     }).format(amount)
 }
 

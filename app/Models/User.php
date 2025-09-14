@@ -12,12 +12,11 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    // Usar conexión MySQL para usuarios
-    protected $connection = 'mysql';
+
     protected $table = 'users';
     protected $primaryKey = 'co_ven';
     public $timestamps = false; // Deshabilitar si no existen created_at/updated_at
-    public $incrementing = false;
+    //public $incrementing = false;
     protected $keyType = 'string';
 
     /**
@@ -50,7 +49,12 @@ class User extends Authenticatable
         'name',
         'password',
         'rol',
-        'email' // Agregar email si existe en la tabla
+        'email',
+        'status'
+    ];
+
+    protected $casts = [
+        'status' => 'boolean',
     ];
 
     /**

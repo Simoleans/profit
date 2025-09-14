@@ -24,10 +24,16 @@ const breadcrumbs = [
     },
 ]
 
+// Generar fecha actual en formato YYYY-MM-DD
+const today = new Date()
+const currentDate = today.getFullYear() + '-' +
+    String(today.getMonth() + 1).padStart(2, '0') + '-' +
+    String(today.getDate()).padStart(2, '0')
+
 const form = useForm({
     co_cli: props.order.co_cli,
-    fec_emis: props.order.fec_emis.split('T')[0],
-    fec_venc: props.order.fec_venc.split('T')[0],
+    fec_emis: props.order.fec_emis.split('T')[0], // Mantener fecha original de emisión
+    fec_venc: currentDate, // Fecha actual como vencimiento
     descrip: props.order.descrip || '',
     comentario: props.order.comentario || '',
     dir_ent: props.order.dir_ent || '',
@@ -145,11 +151,11 @@ const totals = computed(() => {
 const formatCurrency = (amount) => {
     // Verificar que amount es un número válido
     if (isNaN(amount) || amount === null || amount === undefined) {
-        return 'Bs.S 0,00'
+        return '$0.00'
     }
-    return new Intl.NumberFormat('es-VE', {
+    return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'VES'
+        currency: 'USD'
     }).format(amount)
 }
 
@@ -210,32 +216,17 @@ const submit = () => {
                                 </div>
                             </div>
 
-                            <!-- Fecha de emisión -->
+                            <!-- Fecha de emisión (solo lectura) -->
                             <div class="space-y-2">
                                 <Label for="fec_emis">Fecha de Emisión *</Label>
                                 <Input
                                     id="fec_emis"
                                     type="date"
                                     v-model="form.fec_emis"
-                                    :class="{ 'border-red-500': form.errors.fec_emis }"
+                                    disabled
+                                    class="bg-gray-100 cursor-not-allowed"
                                 />
-                                <div v-if="form.errors.fec_emis" class="text-sm text-red-600">
-                                    {{ form.errors.fec_emis }}
-                                </div>
-                            </div>
-
-                            <!-- Fecha de vencimiento -->
-                            <div class="space-y-2">
-                                <Label for="fec_venc">Fecha de Vencimiento *</Label>
-                                <Input
-                                    id="fec_venc"
-                                    type="date"
-                                    v-model="form.fec_venc"
-                                    :class="{ 'border-red-500': form.errors.fec_venc }"
-                                />
-                                <div v-if="form.errors.fec_venc" class="text-sm text-red-600">
-                                    {{ form.errors.fec_venc }}
-                                </div>
+                                <p class="text-xs text-gray-500">La fecha de emisión no se puede modificar</p>
                             </div>
 
                             <!-- Descripción -->

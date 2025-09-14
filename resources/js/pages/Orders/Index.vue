@@ -65,18 +65,20 @@ const getStatusText = (status, anulada) => {
         case 'PEN': return 'Pendiente'
         case 'A':
         case 'APR': return 'Aprobado'
-        case 'R':
-        case 'PRO': return 'Procesado'
-        case 'E':
-        case 'ENT': return 'Entregado'
+        case 'F':
+        case 'FACT': return 'Facturado'
+        case 'C':
+        case 'CAN': return 'Cancelado'
+        case 'A':
+        case 'ANU': return 'Anulado'
         default: return status
     }
 }
 
 const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('es-VE', {
+    return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'VES'
+        currency: 'USD'
     }).format(amount)
 }
 

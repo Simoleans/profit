@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Support\Facades\Auth;
 class Client extends Model
 {
     protected $connection = 'sqlsrv';
@@ -27,9 +27,35 @@ class Client extends Model
         'co_ven'
     ];
 
+    /* protected $casts = [
+        'status' => 'boolean',
+    ]; */
+
     // Relación con el vendedor/usuario
     public function vendedor()
     {
         return $this->belongsTo(User::class, 'co_ven', 'co_ven');
+    }
+
+   /*  public function scopeActive($query)
+    {
+        return $query->where('status', true);
+    } */
+
+    //querys
+    public function scopeClientWithUser($query, $search)
+    {
+        $user = Auth::user();
+        $clients = Client::query()
+            ->where('co_ven', $user->co_ven) // Solo clientes del vendedor logueado
+            ->when($search, function ($query, $search) {
+                return $query->where('cli_des', 'like', "%{$search}%")
+                           ->orWhere('co_cli', 'like', "%{$search}%");
+            })
+            ->orderBy('cli_des')
+            ->paginate(10)
+            ->withQueryString();
+
+        return $clients;
     }
 }

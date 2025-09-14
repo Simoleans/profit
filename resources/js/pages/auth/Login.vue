@@ -43,16 +43,16 @@ defineProps<{
                         autofocus
                         :tabindex="1"
                         autocomplete="username"
-                        placeholder="VEN001"
+                        placeholder="000xxxx"
                     />
                     <InputError :message="errors.co_ven" />
                 </div>
 
                 <div class="grid gap-2">
-                    <div class="flex items-center justify-between">
+                   <!--  <div class="flex items-center justify-between">
                         <Label for="password">Contraseña</Label>
                         <TextLink v-if="canResetPassword" :href="request()" class="text-sm" :tabindex="5"> ¿Olvidaste tu contraseña? </TextLink>
-                    </div>
+                    </div> -->
                     <Input
                         id="password"
                         type="password"

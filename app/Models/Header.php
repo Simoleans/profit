@@ -10,7 +10,7 @@ class Header extends Model
     protected $table = 'encabezado';
     protected $primaryKey = 'fact_num';
     public $timestamps = false;
-    public $incrementing = false; // Usaremos correlativo manual
+    //public $incrementing = false; // Usaremos correlativo manual
     protected $keyType = 'int';
 
     protected $fillable = [

@@ -1,9 +1,10 @@
-<script setup>
+<script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import ShowClient from '@/components/ShowClient.vue';
+import CreateClient from '@/components/CreateClient.vue';
 import { ref, watch } from 'vue';
 
 // Props recibidas del controlador
@@ -53,7 +54,7 @@ const goToPage = (url) => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="p-6">
-            <!-- Header con título -->
+            <!-- Header con título y botón de agregar -->
             <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
@@ -63,6 +64,7 @@ const goToPage = (url) => {
                         Lista de clientes asignados a tu código de vendedor
                     </p>
                 </div>
+                <CreateClient />
             </div>
 
             <!-- Card contenedor de la tabla -->

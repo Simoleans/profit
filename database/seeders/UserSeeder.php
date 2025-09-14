@@ -17,7 +17,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Administrador Sistema',
                 'password' => Hash::make('admin123'),
-                'rol' => '0',
+                'rol' => 0,
                 'co_ven' => 'ADM001',
             ]
         ];

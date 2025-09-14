@@ -310,9 +310,9 @@ class HeaderController extends Controller
                 'tot_bruto' => $tot_bruto,
                 'tot_neto' => $tot_neto,
                 'iva' => $iva,
-                'descrip' => substr($request->descrip, 0, 60), // varchar(60)
-                'comentario' => $request->comentario, // text - sin límite
-                'dir_ent' => $request->dir_ent ?? '', // text - requerido
+                'descrip' => substr($request->descrip, 0, 60),
+                'comentario' => $request->comentario,
+                'dir_ent' => $request->dir_ent ?? '',
             ]);
 
             // Crear nuevos renglones

@@ -7,7 +7,15 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function urlIsActive(urlToCheck: NonNullable<InertiaLinkProps['href']>, currentUrl: string) {
-    return toUrl(urlToCheck) === currentUrl;
+    const checkUrl = toUrl(urlToCheck);
+
+    // Comparación exacta para la página de inicio
+    if (checkUrl === '/') {
+        return currentUrl === '/';
+    }
+
+    // Para otras rutas, verificar si la URL actual comienza con la URL a verificar
+    return currentUrl.startsWith(checkUrl);
 }
 
 export function toUrl(href: NonNullable<InertiaLinkProps['href']>) {
