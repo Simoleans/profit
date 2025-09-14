@@ -19,10 +19,7 @@ class ClientController extends Controller
         if(auth()->user()->rol == 1){
             $clients = Client::clientWithUser($search);
         }else{ //es admin
-            $clients = Client::query()
-            ->orderBy('cli_des')
-            ->paginate(10)
-            ->withQueryString();
+            $clients = Client::clientWithUserAndAdmin($search);
         }
 
         //dd($clients);
@@ -76,11 +73,11 @@ class ClientController extends Controller
         $user = Auth::user();
 
         // Generar el código de cliente automáticamente
-        $lastClient = Client::orderBy('co_cli', 'desc')->first();
-        $newClientCode = $lastClient ? (str_pad((int)$lastClient->co_cli + 1, 6, '0', STR_PAD_LEFT)) : '000001';
+        /* $lastClient = Client::orderBy('co_cli', 'desc')->first();
+        $newClientCode = $lastClient ? (str_pad((int)$lastClient->co_cli + 1, 6, '0', STR_PAD_LEFT)) : '000001'; */
 
         // Agregar campos automáticos
-        $validated['co_cli'] = $newClientCode;
+        $validated['co_cli'] = '';
         $validated['co_ven'] = $user->co_ven; // Código del vendedor que registra
 
         // Campos opcionales que pueden estar vacíos
@@ -105,8 +102,8 @@ class ClientController extends Controller
     {
         $user = Auth::user();
 
-        $client = Client::where('co_cli', $id)
-                       ->where('co_ven', $user->co_ven) // Solo clientes del vendedor logueado
+        $client = Client::where('co_cli', trim($id))
+                       //->where('co_ven', $user->co_ven)
                        ->firstOrFail();
 
         return response()->json($client);

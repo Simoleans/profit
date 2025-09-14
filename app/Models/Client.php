@@ -37,7 +37,7 @@ class Client extends Model
         return $this->belongsTo(User::class, 'co_ven', 'co_ven');
     }
 
-   /*  public function scopeActive($query)
+    /* public function scopeActive($query)
     {
         return $query->where('status', true);
     } */
@@ -48,6 +48,21 @@ class Client extends Model
         $user = Auth::user();
         $clients = Client::query()
             ->where('co_ven', $user->co_ven) // Solo clientes del vendedor logueado
+            ->when($search, function ($query, $search) {
+                return $query->where('cli_des', 'like', "%{$search}%")
+                           ->orWhere('co_cli', 'like', "%{$search}%");
+            })
+            ->orderBy('cli_des')
+            ->paginate(10)
+            ->withQueryString();
+
+        return $clients;
+    }
+
+    public function scopeClientWithUserAndAdmin($query, $search)
+    {
+        $user = Auth::user();
+        $clients = Client::query()
             ->when($search, function ($query, $search) {
                 return $query->where('cli_des', 'like', "%{$search}%")
                            ->orWhere('co_cli', 'like', "%{$search}%");
