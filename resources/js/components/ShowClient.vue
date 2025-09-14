@@ -35,7 +35,8 @@ const loadClientDetails = async () => {
     error.value = '';
 
     try {
-        const response = await apiRequest('GET', `/clients/${props.client.co_cli}`);
+        const rifEncoded = encodeURIComponent(props.client.rif.trim());
+        const response = await apiRequest('GET', `/clients/${rifEncoded}`);
 
         if (response.ok) {
             const data = await response.json();
