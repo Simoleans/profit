@@ -16,13 +16,12 @@ class ClientController extends Controller
     {
         $search = $request->get('search', '');
 
-        if(auth()->user()->rol == 1){
-            $clients = Client::clientWithUser($search);
+        if(auth()->user()->rol == 0){
+            $clients = Client::active()->clientWithUser($search);
         }else{ //es admin
-            $clients = Client::clientWithUserAndAdmin($search);
+            $clients = Client::active()->clientWithUserAndAdmin($search);
         }
 
-        //dd($clients);
 
         return Inertia::render('Clients/Index', [
             'clients' => $clients,
@@ -72,17 +71,14 @@ class ClientController extends Controller
 
         $user = Auth::user();
 
-        // Generar el código de cliente automáticamente
-        /* $lastClient = Client::orderBy('co_cli', 'desc')->first();
-        $newClientCode = $lastClient ? (str_pad((int)$lastClient->co_cli + 1, 6, '0', STR_PAD_LEFT)) : '000001'; */
-
         // Agregar campos automáticos
-        $validated['co_cli'] = '';
+        $validated['co_cli'] = ''; // Co_cli vacío al crear
         $validated['co_ven'] = $user->co_ven; // Código del vendedor que registra
 
         // Campos opcionales que pueden estar vacíos
         $validated['direc2'] = '';
         $validated['comentario'] = '';
+        $validated['status'] = 1; // Cliente activo por defecto
 
         try {
             // Crear el cliente
@@ -102,9 +98,8 @@ class ClientController extends Controller
     {
         $user = Auth::user();
 
-        $client = Client::where('co_cli', trim($id))
-                       //->where('co_ven', $user->co_ven)
-                       ->firstOrFail();
+        $rif = urldecode(trim($id)); // Decodificar URL y limpiar espacios
+        $client = Client::where('rif', $rif)->firstOrFail();
 
         return response()->json($client);
     }
@@ -122,14 +117,65 @@ class ClientController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        // Validar los datos del formulario
+        $validated = $request->validate([
+            'cli_des' => 'required|string|max:60',
+            'rif' => 'required|unique:sqlsrv.clientes,rif,' . urldecode(trim($id)) . ',rif',
+            'direc1' => 'required|string|max:120',
+            'telefonos' => 'required|string|max:30',
+            'respons' => 'required|string|max:60',
+            'email' => 'required|email|max:120',
+            'ciudad' => 'required|string|max:30',
+        ], [
+            'cli_des.required' => 'El nombre o razón social es obligatorio.',
+            'cli_des.max' => 'El nombre no puede exceder 60 caracteres.',
+            'rif.required' => 'El RIF/Cédula es obligatorio.',
+            'rif.unique' => 'Este RIF/Cédula ya está registrado en el sistema.',
+            'direc1.required' => 'La dirección es obligatoria.',
+            'direc1.max' => 'La dirección no puede exceder 120 caracteres.',
+            'telefonos.required' => 'Los teléfonos son obligatorios.',
+            'telefonos.max' => 'Los teléfonos no pueden exceder 30 caracteres.',
+            'respons.required' => 'El responsable es obligatorio.',
+            'respons.max' => 'El responsable no puede exceder 60 caracteres.',
+            'email.required' => 'El email es obligatorio.',
+            'email.email' => 'El email debe tener un formato válido.',
+            'email.max' => 'El email no puede exceder 120 caracteres.',
+            'ciudad.required' => 'La ciudad es obligatoria.',
+            'ciudad.max' => 'La ciudad no puede exceder 30 caracteres.',
+        ]);
+
+        try {
+            // Buscar el cliente por RIF
+            $rif = urldecode(trim($id)); // Decodificar URL y limpiar espacios
+            $client = Client::where('rif', $rif)->firstOrFail();
+
+            // Actualizar el cliente
+            $client->update($validated);
+
+            return redirect()->route('clients.index')->with('success', 'Cliente actualizado exitosamente.');
+
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Error al actualizar el cliente: ' . $e->getMessage()])->withInput();
+        }
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified resource from storage (soft delete).
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            // Buscar el cliente por RIF
+            $rif = urldecode(trim($id)); // Decodificar URL y limpiar espacios
+            $client = Client::where('rif', $rif)->firstOrFail();
+
+            // Soft delete: cambiar status a 0
+            $client->update(['status' => 0]);
+
+            return redirect()->route('clients.index')->with('success', 'Cliente desactivado exitosamente.');
+
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Error al desactivar el cliente: ' . $e->getMessage()]);
+        }
     }
 }

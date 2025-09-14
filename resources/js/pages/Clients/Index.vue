@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import ShowClient from '@/components/ShowClient.vue';
 import CreateClient from '@/components/CreateClient.vue';
+import EditClient from '@/components/EditClient.vue';
+import DeleteClient from '@/components/DeleteClient.vue';
 import { ref, watch } from 'vue';
 
 // Props recibidas del controlador
@@ -164,6 +166,8 @@ const goToPage = (url) => {
                                 <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                     <div class="flex items-center justify-end gap-2">
                                         <ShowClient :client="client" />
+                                        <EditClient :client="client" />
+                                        <DeleteClient :client="client" />
                                     </div>
                                 </td>
                             </tr>

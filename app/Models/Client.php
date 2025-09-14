@@ -24,7 +24,8 @@ class Client extends Model
         'rif',
         'email',
         'ciudad',
-        'co_ven'
+        'co_ven',
+        'status'
     ];
 
     /* protected $casts = [
@@ -37,10 +38,10 @@ class Client extends Model
         return $this->belongsTo(User::class, 'co_ven', 'co_ven');
     }
 
-    /* public function scopeActive($query)
+    public function scopeActive($query)
     {
-        return $query->where('status', true);
-    } */
+        return $query->where('status', 1);
+    }
 
     //querys
     public function scopeClientWithUser($query, $search)
