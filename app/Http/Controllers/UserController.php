@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\User;
 use App\Models\Seller;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -17,6 +18,8 @@ class UserController extends Controller
         $search = $request->get('search', '');
 
         $users = User::query()
+            ->active() // Solo usuarios activos (status = 1)
+            ->where('co_ven', '!=', Auth::user()->co_ven) // Excluir usuario en sesión
             ->when($search, function ($query, $search) {
                 return $query->where('name', 'like', "%{$search}%")
                            ->orWhere('co_ven', 'like', "%{$search}%");
@@ -69,6 +72,7 @@ class UserController extends Controller
                 'co_ven' => $validated['co_ven'],
                 'password' => bcrypt($validated['password']),
                 'rol' => $validated['rol'],
+                'status' => 1, // Usuario activo por defecto
             ]);
 
             return redirect()->route('users.index')->with('success', 'Usuario creado exitosamente.');
@@ -131,11 +135,23 @@ class UserController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified resource from storage (soft delete).
      */
     public function destroy(string $id)
     {
-        //
+        $user = User::findOrFail($id);
+
+        // No permitir que el usuario se elimine a sí mismo
+        if ($user->co_ven === Auth::user()->co_ven) {
+            return redirect()->route('users.index')->withErrors([
+                'error' => 'No puedes eliminarte a ti mismo.'
+            ]);
+        }
+
+        // Soft delete: cambiar status a 0
+        $user->update(['status' => 0]);
+
+        return redirect()->route('users.index')->with('success', 'Usuario desactivado exitosamente.');
     }
 
     /**

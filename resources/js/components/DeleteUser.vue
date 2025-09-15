@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import { Form } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 // Components
-import HeadingSmall from '@/components/HeadingSmall.vue';
-import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -17,69 +14,61 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
-const passwordInput = ref<InstanceType<typeof Input> | null>(null);
+// Props
+const props = defineProps<{
+    user: {
+        id: number;
+        co_ven: string;
+        name: string;
+        rol: string;
+    };
+}>();
+
+// Estado para controlar el diálogo
+const isOpen = ref(false);
+
+// Función para eliminar usuario
+const deleteUser = () => {
+    router.delete(`/users/${props.user.id}`, {
+        onSuccess: () => {
+            isOpen.value = false;
+        },
+        preserveScroll: true,
+    });
+};
 </script>
 
 <template>
-    <div class="space-y-6">
-        <HeadingSmall title="Delete account" description="Delete your account and all of its resources" />
-        <div class="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">
-            <div class="relative space-y-0.5 text-red-600 dark:text-red-100">
-                <p class="font-medium">Warning</p>
-                <p class="text-sm">Please proceed with caution, this cannot be undone.</p>
-            </div>
-            <Dialog>
-                <DialogTrigger as-child>
-                    <Button variant="destructive">Delete account</Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <Form
-                        v-bind="ProfileController.destroy.form()"
-                        reset-on-success
-                        @error="() => passwordInput?.$el?.focus()"
-                        :options="{
-                            preserveScroll: true,
-                        }"
-                        class="space-y-6"
-                        v-slot="{ errors, processing, reset, clearErrors }"
-                    >
-                        <DialogHeader class="space-y-3">
-                            <DialogTitle>Are you sure you want to delete your account?</DialogTitle>
-                            <DialogDescription>
-                                Once your account is deleted, all of its resources and data will also be permanently deleted. Please enter your
-                                password to confirm you would like to permanently delete your account.
-                            </DialogDescription>
-                        </DialogHeader>
+    <Dialog v-model:open="isOpen">
+        <DialogTrigger as-child>
+            <Button variant="outline" size="sm" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span class="sr-only">Eliminar usuario</span>
+            </Button>
+        </DialogTrigger>
+        <DialogContent>
+            <DialogHeader class="space-y-3">
+                <DialogTitle>¿Estás seguro de desactivar este usuario?</DialogTitle>
+                <DialogDescription>
+                    Esta acción desactivará al usuario <strong>{{ user.name }}</strong> ({{ user.co_ven }}).
+                    El usuario no podrá acceder al sistema, pero sus datos se conservarán.
+                </DialogDescription>
+            </DialogHeader>
 
-                        <div class="grid gap-2">
-                            <Label for="password" class="sr-only">Password</Label>
-                            <Input id="password" type="password" name="password" ref="passwordInput" placeholder="Password" />
-                            <InputError :message="errors.password" />
-                        </div>
+            <DialogFooter class="gap-2">
+                <DialogClose as-child>
+                    <Button variant="secondary">
+                        Cancelar
+                    </Button>
+                </DialogClose>
 
-                        <DialogFooter class="gap-2">
-                            <DialogClose as-child>
-                                <Button
-                                    variant="secondary"
-                                    @click="
-                                        () => {
-                                            clearErrors();
-                                            reset();
-                                        }
-                                    "
-                                >
-                                    Cancel
-                                </Button>
-                            </DialogClose>
-
-                            <Button type="submit" variant="destructive" :disabled="processing"> Delete account </Button>
-                        </DialogFooter>
-                    </Form>
-                </DialogContent>
-            </Dialog>
-        </div>
-    </div>
+                <Button variant="destructive" @click="deleteUser">
+                    Desactivar usuario
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>

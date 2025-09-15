@@ -53,6 +53,10 @@ class User extends Authenticatable
         'status'
     ];
 
+    protected $attributes = [
+        'status' => 1, // Por defecto, usuarios activos
+    ];
+
     protected $casts = [
         'status' => 'boolean',
     ];
@@ -78,5 +82,13 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Scope para filtrar solo usuarios activos (status = 1)
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
     }
 }
