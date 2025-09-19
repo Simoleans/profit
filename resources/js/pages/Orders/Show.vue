@@ -111,7 +111,8 @@ const printOrder = () => {
                 <!-- Información del pedido -->
                 <div class="lg:col-span-2 space-y-6">
                     <!-- Estado y fechas -->
-                    <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
                         <div class="px-4 py-5 sm:p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
@@ -122,7 +123,7 @@ const printOrder = () => {
                                 </span>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-4">
+                            <!-- <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Fecha de Emisión</p>
                                     <p class="text-lg text-gray-900 dark:text-white">{{ formatDate(order.fec_emis) }}</p>
@@ -131,7 +132,7 @@ const printOrder = () => {
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Fecha de Vencimiento</p>
                                     <p class="text-lg text-gray-900 dark:text-white">{{ formatDate(order.fec_venc) }}</p>
                                 </div>
-                            </div>
+                            </div> -->
 
                             <div v-if="order.descrip" class="mt-4">
                                 <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Descripción</p>
@@ -143,6 +144,30 @@ const printOrder = () => {
                                 <p class="text-gray-900 dark:text-white">{{ order.comentario }}</p>
                             </div>
                         </div>
+                    </div>
+                    <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
+                        <div class="px-4 py-5 sm:p-6">
+                            <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white mb-4">
+                                Resumen Financiero
+                            </h3>
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-900 dark:text-white">Subtotal:</span>
+                                    <span class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(order.tot_bruto) }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-900 dark:text-white">IVA (16%):</span>
+                                    <span class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(order.iva) }}</span>
+                                </div>
+                                <div class="border-t border-gray-200 dark:border-gray-600 pt-2">
+                                    <div class="flex justify-between">
+                                        <span class="font-bold text-gray-900 dark:text-white">Total:</span>
+                                        <span class="font-bold text-lg text-gray-900 dark:text-white">{{ formatCurrency(parseFloat(order.tot_neto) + parseFloat(order.iva)) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     </div>
 
                     <!-- Artículos -->
@@ -236,7 +261,7 @@ const printOrder = () => {
                     </div>
 
                     <!-- Vendedor -->
-                    <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
+                    <!-- <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
                         <div class="px-4 py-5 sm:p-6">
                             <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white mb-4">
                                 Vendedor
@@ -250,7 +275,7 @@ const printOrder = () => {
                                 <p class="text-gray-900 dark:text-white">{{ order.seller.co_ven }}</p>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
 
                     <!-- Totales -->
                     <!-- <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">

@@ -42,9 +42,9 @@ watch(searchQuery, () => {
 // Función para formatear precio
 const formatPrice = (price) => {
     if (!price || price === 0) return 'N/A';
-    return new Intl.NumberFormat('es-VE', {
+    return new Intl.NumberFormat('es-US', {
         style: 'currency',
-        currency: 'VES',
+        currency: 'USD',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     }).format(price);

@@ -158,14 +158,14 @@ class HeaderController extends Controller
                 'iva' => $iva,
                 'status' => 'P', // Pendiente - char(1)
                 'descrip' => substr($request->descrip, 0, 60), // varchar(60)
-                'comentario' => $request->comentario, // text - sin límite
+                'comentario' => $request->comentario ?? '', // text - sin límite
                 'dir_ent' => $request->dir_ent ?? '', // text - requerido
                 'anulada' => false
             ]);
 
             // Crear renglones
             foreach ($request->rows as $index => $row) {
-                $cleanCoArt = $this->cleanArticleCode($row['co_art'], 8); // Usar función específica para artículos
+                //$cleanCoArt = $this->cleanArticleCode($row['co_art'], 8); // Usar función específica para artículos
                 $cleanUniVenta = $this->cleanString($row['uni_venta'] ?? 'UND', 3); // Usar función de limpieza
 
                 // Log para debugging - todos los campos
@@ -173,8 +173,8 @@ class HeaderController extends Controller
                     'fact_num' => $fact_num,
                     'reng_num' => $index + 1,
                     'co_art_original' => $row['co_art'],
-                    'co_art_clean' => $cleanCoArt,
-                    'co_art_length' => strlen($cleanCoArt),
+                    'co_art_clean' => $row['co_art'],
+                    'co_art_length' => strlen($row['co_art']),
                     'total_art' => floatval($row['total_art']),
                     'prec_vta' => floatval($row['prec_vta']),
                     'reng_neto' => floatval($row['total_art']) * floatval($row['prec_vta']),
@@ -188,7 +188,7 @@ class HeaderController extends Controller
                 Row::create([
                     'fact_num' => $fact_num,
                     'reng_num' => $index + 1,
-                    'co_art' => substr($cleanCoArt, 0, 6), // Ultra conservador - 6 caracteres max
+                    'co_art' => trim($row['co_art']),
                     'total_art' => floatval($row['total_art']),
                     'prec_vta' => floatval($row['prec_vta']),
                     'reng_neto' => floatval($row['total_art']) * floatval($row['prec_vta']),
@@ -332,7 +332,7 @@ class HeaderController extends Controller
                 Row::create([
                     'fact_num' => $header->fact_num,
                     'reng_num' => $index + 1,
-                    'co_art' => substr($this->cleanArticleCode($row['co_art'], 8), 0, 6), // Ultra conservador - 6 caracteres max
+                    'co_art' => trim($row['co_art']), // Ultra conservador - 6 caracteres max
                     'total_art' => floatval($row['total_art']),
                     'prec_vta' => floatval($row['prec_vta']),
                     'reng_neto' => floatval($row['total_art']) * floatval($row['prec_vta']),

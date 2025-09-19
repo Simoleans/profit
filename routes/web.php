@@ -9,7 +9,8 @@ use App\Http\Controllers\HeaderController;
 use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome');
+    //return Inertia::render('Welcome');
+    return redirect()->route('login');
 })->name('home');
 
 Route::get('dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');

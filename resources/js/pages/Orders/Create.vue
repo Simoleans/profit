@@ -392,7 +392,8 @@ const submit = () => {
                                             <td class="px-6 py-4">
                                                 <Input
                                                     v-model="row.uni_venta"
-                                                    class="w-20"
+                                                    class="w-20 bg-gray-100"
+                                                    readonly
                                                 />
                                             </td>
                                             <td class="px-6 py-4 font-medium text-gray-900">
