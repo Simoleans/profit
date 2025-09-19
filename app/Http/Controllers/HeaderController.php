@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class HeaderController extends Controller
 {
@@ -102,6 +103,7 @@ class HeaderController extends Controller
      */
     public function store(Request $request)
     {
+        //dd($request->all());
         $request->validate([
             'co_cli' => 'required|string|max:10', // Temporalmente sin exists para debugging
             'fec_emis' => 'required|date',
@@ -134,13 +136,23 @@ class HeaderController extends Controller
 
             $iva = $tot_neto * 0.16; // Ajustar según configuración
 
+            $fecEmis = \Carbon\Carbon::createFromFormat('Y-m-d', $request->fec_emis)
+            ->startOfDay()
+            ->format('Y-m-d\TH:i:s'); // <- ISO 8601 con T
+
+            $fecVenc = \Carbon\Carbon::createFromFormat('Y-m-d', $request->fec_venc)
+                        ->startOfDay()
+                        ->format('Y-m-d\TH:i:s');
+
+
+
             // Crear encabezado
             $header = Header::create([
                 'fact_num' => $fact_num, // Correlativo automático 1, 2, 3, etc.
                 'co_cli' => trim($request->co_cli), // Usar el código tal como viene
                 'co_ven' => Auth::user()->co_ven, // Usar el código tal como viene
-                'fec_emis' => $request->fec_emis,
-                'fec_venc' => $request->fec_venc,
+                'fec_emis'  => $fecEmis,
+                'fec_venc'  => $fecVenc,
                 'tot_bruto' => $tot_bruto,
                 'tot_neto' => $tot_neto,
                 'iva' => $iva,
@@ -158,7 +170,7 @@ class HeaderController extends Controller
 
                 // Log para debugging - todos los campos
                 \Log::info('Creando renglón', [
-                    'fact_num' => $header->fact_num,
+                    'fact_num' => $fact_num,
                     'reng_num' => $index + 1,
                     'co_art_original' => $row['co_art'],
                     'co_art_clean' => $cleanCoArt,
@@ -174,7 +186,7 @@ class HeaderController extends Controller
                 ]);
 
                 Row::create([
-                    'fact_num' => $header->fact_num,
+                    'fact_num' => $fact_num,
                     'reng_num' => $index + 1,
                     'co_art' => substr($cleanCoArt, 0, 6), // Ultra conservador - 6 caracteres max
                     'total_art' => floatval($row['total_art']),

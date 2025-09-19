@@ -38,6 +38,11 @@ class Header extends Model
         'anulada' => 'boolean'
     ];
 
+    protected $dateFormat = 'Y-m-d\TH:i:s'; // ISO con T (no ambiguo)
+
+
+
+
     // Relación con renglones
     public function rows()
     {
