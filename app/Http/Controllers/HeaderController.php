@@ -389,6 +389,7 @@ class HeaderController extends Controller
                 $q->where('cli_des', 'like', "%{$query}%")
                   ->orWhere('co_cli', 'like', "%{$query}%");
             })
+            ->where('co_cli','!=','')
             ->limit(20)
             ->get(['co_cli', 'cli_des', 'rif', 'co_ven']);
 

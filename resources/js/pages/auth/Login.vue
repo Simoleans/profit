@@ -78,10 +78,10 @@ defineProps<{
                 </Button>
             </div>
 
-            <div class="text-center text-sm text-muted-foreground">
+            <!-- <div class="text-center text-sm text-muted-foreground">
                 ¿No tienes una cuenta?
                 <TextLink :href="register()" :tabindex="5">Regístrate</TextLink>
-            </div>
+            </div> -->
         </Form>
     </AuthBase>
 </template>
