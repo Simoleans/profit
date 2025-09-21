@@ -221,7 +221,7 @@ const deleteOrder = (order) => {
                                     {{ formatDate(order.fec_emis) }}
                                 </td>
                                 <td class="hidden whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white md:table-cell">
-                                    {{ formatCurrency(order.tot_neto) }}
+                                    {{ formatCurrency(parseFloat(order.tot_neto) + parseFloat(order.iva)) }}
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                                     <span class="inline-flex rounded-full px-2 py-1 text-xs font-semibold" :class="getStatusBadgeClass(order.status, order.anulada)">

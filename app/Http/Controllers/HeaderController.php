@@ -284,8 +284,8 @@ class HeaderController extends Controller
 
         $request->validate([
             'co_cli' => 'required|string|max:10', // Temporalmente sin exists para debugging
-            'fec_emis' => 'required|date',
-            'fec_venc' => 'required|date|after_or_equal:fec_emis',
+            //'fec_emis' => 'required|date',
+            //'fec_venc' => 'required|date|after_or_equal:fec_emis',
             'descrip' => 'required|string|max:60', // varchar(60) NOT NULL
             'comentario' => 'nullable|string', // text NULL
             'dir_ent' => 'nullable|string', // text NOT NULL (pero puede ser vacío)
@@ -317,13 +317,13 @@ class HeaderController extends Controller
             // Actualizar encabezado
             $header->update([
                 'co_cli' => trim($request->co_cli), // Usar el código tal como viene
-                'fec_emis' => $request->fec_emis,
-                'fec_venc' => $request->fec_venc,
+                //'fec_emis' => $request->fec_emis,
+                //'fec_venc' => $request->fec_venc,
                 'tot_bruto' => $tot_bruto,
                 'tot_neto' => $tot_neto,
                 'iva' => $iva,
                 'descrip' => substr($request->descrip, 0, 60),
-                'comentario' => $request->comentario,
+                'comentario' => $request->comentario ?? '',
                 'dir_ent' => $request->dir_ent ?? '',
             ]);
 
