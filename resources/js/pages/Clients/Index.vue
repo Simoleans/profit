@@ -13,10 +13,12 @@ import { ref, watch } from 'vue';
 const props = defineProps({
     clients: Object,
     search: String,
+    activeTab: String,
 });
 
-// Estado para la búsqueda
+// Estado para la búsqueda y tabs
 const searchQuery = ref(props.search || '');
+const currentTab = ref(props.activeTab || 'processed');
 
 // Breadcrumbs
 const breadcrumbs = [
@@ -28,7 +30,22 @@ const breadcrumbs = [
 
 // Función para realizar búsqueda
 const performSearch = () => {
-    router.get('/clients', { search: searchQuery.value }, {
+    router.get('/clients', {
+        search: searchQuery.value,
+        tab: currentTab.value
+    }, {
+        preserveState: true,
+        replace: true,
+    });
+};
+
+// Función para cambiar de tab
+const changeTab = (tab) => {
+    currentTab.value = tab;
+    router.get('/clients', {
+        search: searchQuery.value,
+        tab: tab
+    }, {
         preserveState: true,
         replace: true,
     });
@@ -60,10 +77,10 @@ const goToPage = (url) => {
             <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                        Mis Clientes
+                        Gestión de Clientes
                     </h1>
                     <p class="text-gray-600 dark:text-gray-400">
-                        Lista de clientes asignados a tu código de vendedor
+                        Administra tus clientes temporales y procesados
                     </p>
                 </div>
                 <CreateClient />
@@ -71,15 +88,49 @@ const goToPage = (url) => {
 
             <!-- Card contenedor de la tabla -->
             <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
+                <!-- Tabs -->
+                <div class="border-b border-gray-200 dark:border-gray-700">
+                    <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                        <button
+                            @click="changeTab('processed')"
+                            :class="[
+                                'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium',
+                                currentTab === 'processed'
+                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                            ]"
+                        >
+                            Clientes Procesados
+                            <span v-if="currentTab === 'processed'" class="ml-2 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-600 dark:bg-blue-900 dark:text-blue-400">
+                                {{ clients.total }}
+                            </span>
+                        </button>
+                        <button
+                            @click="changeTab('temp')"
+                            :class="[
+                                'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium',
+                                currentTab === 'temp'
+                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                            ]"
+                        >
+                            Clientes Temporales
+                            <span v-if="currentTab === 'temp'" class="ml-2 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-600 dark:bg-blue-900 dark:text-blue-400">
+                                {{ clients.total }}
+                            </span>
+                        </button>
+                    </nav>
+                </div>
+
                 <!-- Header del card con búsqueda -->
                 <div class="border-b border-gray-200 bg-white px-4 py-5 dark:border-gray-700 dark:bg-gray-800 sm:px-6">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
-                                Lista de Clientes
+                                {{ currentTab === 'processed' ? 'Clientes Procesados' : 'Clientes Temporales' }}
                             </h3>
                             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                {{ clients.total }} cliente{{ clients.total !== 1 ? 's' : '' }} total{{ clients.total !== 1 ? 'es' : '' }}
+                                {{ clients.total }} cliente{{ clients.total !== 1 ? 's' : '' }} {{ currentTab === 'processed' ? 'procesado' : 'temporal' }}{{ clients.total !== 1 ? 's' : '' }}
                             </p>
                         </div>
 
@@ -133,7 +184,7 @@ const goToPage = (url) => {
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                         </svg>
                                         <span class="text-gray-500 dark:text-gray-400">
-                                            {{ searchQuery ? 'No se encontraron clientes con ese criterio' : 'No tienes clientes asignados' }}
+                                            {{ searchQuery ? 'No se encontraron clientes con ese criterio' : (currentTab === 'processed' ? 'No tienes clientes procesados' : 'No tienes clientes temporales') }}
                                         </span>
                                     </div>
                                 </td>
@@ -165,8 +216,8 @@ const goToPage = (url) => {
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                     <div class="flex items-center justify-end gap-2">
-                                        <ShowClient :client="client" />
-                                        <EditClient :client="client" />
+                                        <ShowClient :client="client" :tab="currentTab" />
+                                        <!-- <EditClient :client="client" /> -->
                                         <DeleteClient :client="client" />
                                     </div>
                                 </td>

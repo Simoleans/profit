@@ -74,4 +74,39 @@ class Client extends Model
 
         return $clients;
     }
+
+    // Scope para clientes procesados (con co_cli no vacío) para usuarios normales
+    public function scopeClientProcessedWithUser($query, $search)
+    {
+        $user = Auth::user();
+        $clients = Client::query()
+            ->where('co_cli', '!=', '')
+            ->where('co_ven', $user->co_ven)
+            ->when($search, function ($query, $search) {
+                return $query->where('cli_des', 'like', "%{$search}%")
+                           ->orWhere('co_cli', 'like', "%{$search}%");
+            })
+            ->orderBy('cli_des')
+            ->paginate(10)
+            ->withQueryString();
+
+        return $clients;
+    }
+
+    // Scope para clientes procesados (con co_cli no vacío) para administradores
+    public function scopeClientProcessedWithAdmin($query, $search)
+    {
+        $user = Auth::user();
+        $clients = Client::query()
+            ->where('co_cli', '!=', '')
+            ->when($search, function ($query, $search) {
+                return $query->where('cli_des', 'like', "%{$search}%")
+                           ->orWhere('co_cli', 'like', "%{$search}%");
+            })
+            ->orderBy('cli_des')
+            ->paginate(10)
+            ->withQueryString();
+
+        return $clients;
+    }
 }

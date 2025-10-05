@@ -159,16 +159,16 @@ const formatEmail = () => {
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                Nuevo Cliente
+                Solicitud de creación
             </Button>
         </DialogTrigger>
 
         <DialogContent class="sm:max-w-lg max-h-[90vh] overflow-y-auto">
             <form @submit.prevent="submitForm" class="space-y-6">
                 <DialogHeader class="space-y-3">
-                    <DialogTitle>Registrar Nuevo Cliente</DialogTitle>
+                    <DialogTitle>Solicitud de creación de nuevo cliente</DialogTitle>
                     <DialogDescription>
-                        Completa la información para registrar un nuevo cliente en el sistema.
+                        Completa la información para solicitar la creación de un nuevo cliente en el sistema.
                     </DialogDescription>
                 </DialogHeader>
 

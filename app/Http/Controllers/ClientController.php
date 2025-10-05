@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Client;
+use App\Models\ClientTemp;
 use Illuminate\Support\Facades\Auth;
 
 class ClientController extends Controller
@@ -15,17 +16,26 @@ class ClientController extends Controller
     public function index(Request $request)
     {
         $search = $request->get('search', '');
+        $tab = $request->get('tab', 'processed'); // 'processed' o 'temp'
 
-        if(auth()->user()->rol == 0){
-            $clients = Client::active()->clientWithUser($search);
+        if(Auth::user()->rol == 0){
+            if($tab === 'temp') {
+                $clients = ClientTemp::clientTempWithUser($search);
+            } else {
+                $clients = Client::clientProcessedWithUser($search);
+            }
         }else{ //es admin
-            $clients = Client::active()->clientWithUserAndAdmin($search);
+            if($tab === 'temp') {
+                $clients = ClientTemp::clientTempWithAdmin($search);
+            } else {
+                $clients = Client::clientProcessedWithAdmin($search);
+            }
         }
-
 
         return Inertia::render('Clients/Index', [
             'clients' => $clients,
             'search' => $search,
+            'activeTab' => $tab,
         ]);
     }
 
@@ -45,7 +55,7 @@ class ClientController extends Controller
         // Validar los datos del formulario
         $validated = $request->validate([
             'cli_des' => 'required|string|max:60',
-            'rif' => 'required|unique:sqlsrv.clientes,rif',
+            'rif' => 'required|unique:sqlsrv.clientes_temp,rif',
             'direc1' => 'required|string|max:120',
             'telefonos' => 'required|string|max:30',
             'respons' => 'required|string|max:60',
@@ -72,7 +82,7 @@ class ClientController extends Controller
         $user = Auth::user();
 
         // Agregar campos automáticos
-        $validated['co_cli'] = ''; // Co_cli vacío al crear
+        $validated['co_cli'] = ''; // Co_cli vacío al crear en tabla temporal
         $validated['co_ven'] = $user->co_ven; // Código del vendedor que registra
 
         // Campos opcionales que pueden estar vacíos
@@ -81,8 +91,8 @@ class ClientController extends Controller
         $validated['status'] = 1; // Cliente activo por defecto
 
         try {
-            // Crear el cliente
-            $client = Client::create($validated);
+            // Crear el cliente en tabla temporal
+            $client = ClientTemp::create($validated);
 
             return redirect()->route('clients.index')->with('success', 'Cliente registrado exitosamente.');
 
@@ -94,14 +104,26 @@ class ClientController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $id, Request $request)
     {
         $user = Auth::user();
+        $tab = $request->get('tab', 'processed'); // 'processed' o 'temp'
 
         $rif = urldecode(trim($id)); // Decodificar URL y limpiar espacios
-        $client = Client::where('rif', $rif)->firstOrFail();
 
-        return response()->json($client);
+        try {
+            if($tab === 'temp') {
+                // Buscar en tabla temporal
+                $client = ClientTemp::where('rif', $rif)->firstOrFail();
+            } else {
+                // Buscar en tabla principal
+                $client = Client::where('rif', $rif)->firstOrFail();
+            }
+
+            return response()->json($client);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['error' => 'Cliente no encontrado'], 404);
+        }
     }
 
     /**
@@ -120,7 +142,7 @@ class ClientController extends Controller
         // Validar los datos del formulario
         $validated = $request->validate([
             'cli_des' => 'required|string|max:60',
-            'rif' => 'required|unique:sqlsrv.clientes,rif,' . urldecode(trim($id)) . ',rif',
+            'rif' => 'required|unique:sqlsrv.clientes_temp,rif,' . urldecode(trim($id)) . ',rif',
             'direc1' => 'required|string|max:120',
             'telefonos' => 'required|string|max:30',
             'respons' => 'required|string|max:60',
@@ -145,11 +167,11 @@ class ClientController extends Controller
         ]);
 
         try {
-            // Buscar el cliente por RIF
+            // Buscar el cliente por RIF en tabla temporal
             $rif = urldecode(trim($id)); // Decodificar URL y limpiar espacios
-            $client = Client::where('rif', $rif)->firstOrFail();
+            $client = ClientTemp::where('rif', $rif)->firstOrFail();
 
-            // Actualizar el cliente
+            // Actualizar el cliente en tabla temporal
             $client->update($validated);
 
             return redirect()->route('clients.index')->with('success', 'Cliente actualizado exitosamente.');

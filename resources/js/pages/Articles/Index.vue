@@ -1,4 +1,4 @@
-<script setup lang="js">
+<script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Input } from '@/components/ui/input';
@@ -9,10 +9,17 @@ import { ref, watch } from 'vue';
 const props = defineProps({
     articles: Object,
     search: String,
+    categoryFilter: String,
+    lineFilter: String,
+    sublFilter: String,
+    filterOptions: Object,
 });
 
-// Estado para la búsqueda
+// Estado para la búsqueda y filtros
 const searchQuery = ref(props.search || '');
+const selectedCategory = ref(props.categoryFilter || '');
+const selectedLine = ref(props.lineFilter || '');
+const selectedSubl = ref(props.sublFilter || '');
 
 // Breadcrumbs
 const breadcrumbs = [
@@ -22,12 +29,35 @@ const breadcrumbs = [
     },
 ];
 
-// Función para realizar búsqueda
+// Función para realizar búsqueda con filtros
 const performSearch = () => {
-    router.get('/articles', { search: searchQuery.value }, {
+    const params = {
+        search: searchQuery.value,
+        category: selectedCategory.value,
+        line: selectedLine.value,
+        subl: selectedSubl.value,
+    };
+
+    // Remover parámetros vacíos
+    Object.keys(params).forEach(key => {
+        if (!params[key]) {
+            delete params[key];
+        }
+    });
+
+    router.get('/articles', params, {
         preserveState: true,
         replace: true,
     });
+};
+
+// Función para limpiar filtros
+const clearFilters = () => {
+    searchQuery.value = '';
+    selectedCategory.value = '';
+    selectedLine.value = '';
+    selectedSubl.value = '';
+    performSearch();
 };
 
 // Watch para búsqueda en tiempo real (con debounce)
@@ -37,6 +67,11 @@ watch(searchQuery, () => {
     searchTimeout = setTimeout(() => {
         performSearch();
     }, 300);
+});
+
+// Watch para filtros (sin debounce)
+watch([selectedCategory, selectedLine, selectedSubl], () => {
+    performSearch();
 });
 
 // Función para formatear precio
@@ -108,6 +143,85 @@ const goToPage = (url) => {
                     </div>
                 </div>
 
+                <!-- Filtros -->
+                <div class="border-b border-gray-200 bg-gray-50 px-4 py-4 dark:border-gray-700 dark:bg-gray-900 sm:px-6">
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros:</h4>
+
+                            <!-- Filtro Categoría -->
+                            <div class="flex items-center gap-2">
+                                <Label for="category" class="text-xs text-gray-600 dark:text-gray-400">Categoría:</Label>
+                                <select
+                                    id="category"
+                                    v-model="selectedCategory"
+                                    class="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                >
+                                    <option value="">Todas las categorías</option>
+                                    <option v-for="category in filterOptions.categories" :key="category.co_cat" :value="category.co_cat">
+                                        {{ category.cat_des }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Filtro Línea -->
+                            <div class="flex items-center gap-2">
+                                <Label for="line" class="text-xs text-gray-600 dark:text-gray-400">Línea:</Label>
+                                <select
+                                    id="line"
+                                    v-model="selectedLine"
+                                    class="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                >
+                                    <option value="">Todas las líneas</option>
+                                    <option v-for="line in filterOptions.lines" :key="line.co_lin" :value="line.co_lin">
+                                        {{ line.lin_des }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Filtro Sublínea -->
+                            <div class="flex items-center gap-2">
+                                <Label for="subl" class="text-xs text-gray-600 dark:text-gray-400">Sublínea:</Label>
+                                <select
+                                    id="subl"
+                                    v-model="selectedSubl"
+                                    class="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                                >
+                                    <option value="">Todas las sublíneas</option>
+                                    <option v-for="subl in filterOptions.subls" :key="subl.co_subl" :value="subl.co_subl">
+                                        {{ subl.subl_des }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Botón limpiar filtros -->
+                        <button
+                            @click="clearFilters"
+                            class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                        >
+                            <svg class="mr-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Limpiar filtros
+                        </button>
+                    </div>
+
+                    <!-- Indicadores de filtros activos -->
+                    <div v-if="selectedCategory || selectedLine || selectedSubl" class="mt-3 flex flex-wrap gap-2">
+                        <span class="text-xs text-gray-600 dark:text-gray-400">Filtros activos:</span>
+                        <span v-if="selectedCategory" class="inline-flex items-center rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-800 dark:bg-orange-900 dark:text-orange-300">
+                            Categoría: {{ filterOptions.categories.find(c => c.co_cat === selectedCategory)?.cat_des }}
+                        </span>
+                        <span v-if="selectedLine" class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                            Línea: {{ filterOptions.lines.find(l => l.co_lin === selectedLine)?.lin_des }}
+                        </span>
+                        <span v-if="selectedSubl" class="inline-flex items-center rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+                            Sublínea: {{ filterOptions.subls.find(s => s.co_subl === selectedSubl)?.subl_des }}
+                        </span>
+                    </div>
+                </div>
+
                 <!-- Tabla responsive -->
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -119,6 +233,15 @@ const goToPage = (url) => {
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                     Descripción
                                 </th>
+                                <th scope="col" class="hidden px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 sm:table-cell">
+                                    Categoría
+                                </th>
+                                <th scope="col" class="hidden px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 md:table-cell">
+                                    Línea
+                                </th>
+                                <th scope="col" class="hidden px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 lg:table-cell">
+                                    Sublínea
+                                </th>
                                 <th scope="col" class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                     Precio Venta
                                 </th>
@@ -127,7 +250,7 @@ const goToPage = (url) => {
                         <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
                             <!-- Estado vacío -->
                             <tr v-if="articles.data.length === 0">
-                                <td colspan="3" class="px-6 py-12 text-center">
+                                <td colspan="6" class="px-6 py-12 text-center">
                                     <div class="flex flex-col items-center gap-2">
                                         <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -146,8 +269,44 @@ const goToPage = (url) => {
                                 </td>
                                 <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
                                     <div class="flex flex-col">
-                                        <span>{{ article.art_des }}</span>
+                                        <div class="flex items-center gap-1">
+                                            <span>{{ article.art_des }}</span>
+                                            <!-- Indicador de stock pequeño -->
+                                            <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-medium"
+                                                  :class="article.stock_act > 0
+                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                                                    : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'">
+                                                {{ article.stock_act > 0 ? `Stock: ${article.stock_act}` : 'SIN STOCK' }}
+                                            </span>
+                                        </div>
+                                        <!-- En móvil, mostrar categoría, línea y sublínea debajo de la descripción -->
+                                        <div class="mt-1 sm:hidden space-y-1">
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                <span class="font-medium">Categoría:</span> {{ article.category?.cat_des || 'Sin categoría' }}
+                                            </div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                <span class="font-medium">Línea:</span> {{ article.line?.lin_des || 'Sin línea' }}
+                                            </div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                <span class="font-medium">Sublínea:</span> {{ article.subl?.subl_des || 'Sin sublínea' }}
+                                            </div>
+                                        </div>
                                     </div>
+                                </td>
+                                <td class="hidden whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400 sm:table-cell">
+                                    <span class="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900 dark:text-orange-300">
+                                        {{ article.category?.cat_des || 'Sin categoría' }}
+                                    </span>
+                                </td>
+                                <td class="hidden whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400 md:table-cell">
+                                    <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                        {{ article.line?.lin_des || 'Sin línea' }}
+                                    </span>
+                                </td>
+                                <td class="hidden whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400 lg:table-cell">
+                                    <span class="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+                                        {{ article.subl?.subl_des || 'Sin sublínea' }}
+                                    </span>
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                     <span class="inline-flex items-center rounded-lg bg-green-100 px-3 py-1.5 text-sm font-bold text-green-800 shadow-sm dark:bg-green-900 dark:text-green-300">

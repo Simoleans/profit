@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Article;
+use App\Models\Category;
+use App\Models\Line;
+use App\Models\Subl;
 
 class ArticleController extends Controller
 {
@@ -13,20 +16,36 @@ class ArticleController extends Controller
      */
     public function index(Request $request)
     {
-        $search = $request->get('search', '');
+        // Obtener filtros de la request
+        $filters = [
+            'search' => $request->get('search', ''),
+            'category' => $request->get('category', ''),
+            'line' => $request->get('line', ''),
+            'subl' => $request->get('subl', ''),
+        ];
 
+        // Aplicar filtros usando scopes
         $articles = Article::query()
-            ->when($search, function ($query, $search) {
-                return $query->where('art_des', 'like', "%{$search}%")
-                           ->orWhere('co_art', 'like', "%{$search}%");
-            })
+            ->with(['category', 'line', 'subl'])
+            ->filter($filters)
             ->orderBy('art_des')
             ->paginate(15)
             ->withQueryString();
 
+        // Obtener datos para los filtros (solo una vez al cargar la página)
+        $filterOptions = [
+            'categories' => Category::orderBy('cat_des')->get(),
+            'lines' => Line::orderBy('lin_des')->get(),
+            'subls' => Subl::orderBy('subl_des')->get(),
+        ];
+
         return Inertia::render('Articles/Index', [
             'articles' => $articles,
-            'search' => $search,
+            'search' => $filters['search'],
+            'categoryFilter' => $filters['category'],
+            'lineFilter' => $filters['line'],
+            'sublFilter' => $filters['subl'],
+            'filterOptions' => $filterOptions,
         ]);
     }
 

@@ -20,13 +20,15 @@ class Row extends Model
         'prec_vta',
         'reng_neto',
         'tipo_imp',
-        'uni_venta'
+        'uni_venta',
+        'promotion'
     ];
 
     protected $casts = [
         'total_art' => 'decimal:2',
         'prec_vta' => 'decimal:2',
-        'reng_neto' => 'decimal:2'
+        'reng_neto' => 'decimal:2',
+        'promotion' => 'boolean'
     ];
 
     // Relación con encabezado

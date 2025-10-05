@@ -23,14 +23,14 @@ class DashboardController extends Controller
             $newClientsThisMonth = Client::active()
                 ->where('co_ven', $user->co_ven)
                 ->orderBy('co_cli', 'desc')
-                ->limit(5) // Últimos 5 como "nuevos"
+                ->limit(5)
                 ->count();
         } else { // Admin
             $totalClients = Client::active()->count();
             // Para admin, también simulamos como los últimos registrados
             $newClientsThisMonth = Client::active()
                 ->orderBy('co_cli', 'desc')
-                ->limit(10) // Últimos 10 como "nuevos"
+                ->limit(10)
                 ->count();
         }
 

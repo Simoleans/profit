@@ -18,7 +18,11 @@ import { Label } from '@/components/ui/label';
 
 // Props
 const props = defineProps({
-    client: Object
+    client: Object,
+    tab: {
+        type: String,
+        default: 'processed'
+    }
 });
 
 // Estado del modal
@@ -36,14 +40,15 @@ const loadClientDetails = async () => {
 
     try {
         const rifEncoded = encodeURIComponent(props.client.rif.trim());
-        const response = await apiRequest('GET', `/clients/${rifEncoded}`);
+        const url = `/clients/${rifEncoded}?tab=${props.tab}`;
+        const response = await apiRequest('GET', url);
 
         if (response.ok) {
             const data = await response.json();
             clientDetails.value = data;
         } else {
             const errorData = await response.json();
-            error.value = errorData.message || 'Error al cargar los detalles del cliente';
+            error.value = errorData.error || errorData.message || 'Error al cargar los detalles del cliente';
         }
     } catch (err) {
         console.error('Error cargando cliente:', err);
@@ -80,6 +85,15 @@ const formatField = (value) => {
                 <DialogDescription>
                     Información completa del cliente {{ client.cli_des }}
                 </DialogDescription>
+                <!-- Indicador de tabla -->
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+                          :class="props.tab === 'temp'
+                            ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
+                            : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'">
+                        {{ props.tab === 'temp' ? 'Cliente Temporal' : 'Cliente Procesado' }}
+                    </span>
+                </div>
             </DialogHeader>
 
             <!-- Loading state -->

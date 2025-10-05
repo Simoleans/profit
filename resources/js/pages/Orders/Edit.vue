@@ -108,8 +108,8 @@ const addArticle = (article) => {
         form.rows[existingIndex].total_art++
         calculateRowTotal(existingIndex)
     } else {
-        // Agregar nuevo
-        form.rows.push({
+        // Agregar nuevo al inicio de la lista
+        form.rows.unshift({
             co_art: article.co_art,
             art_des: article.art_des,
             total_art: 1,
@@ -387,8 +387,8 @@ const submit = () => {
                                             <td class="px-6 py-4">
                                                 <Input
                                                     type="number"
-                                                    min="0.01"
-                                                    step="0.01"
+                                                    min="1"
+                                                    step="1"
                                                     v-model.number="row.total_art"
                                                     @input="calculateRowTotal(index)"
                                                     class="w-24"
@@ -400,8 +400,8 @@ const submit = () => {
                                                     min="0"
                                                     step="0.01"
                                                     v-model.number="row.prec_vta"
-                                                    @input="calculateRowTotal(index)"
-                                                    class="w-32"
+                                                    class="w-32 bg-gray-100 cursor-not-allowed"
+                                                    readonly
                                                 />
                                             </td>
                                             <td class="px-6 py-4">

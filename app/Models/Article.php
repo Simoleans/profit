@@ -36,4 +36,84 @@ class Article extends Model
         'prec_vta4',
         'prec_vta5'
     ];
+
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'co_cat', 'co_cat');
+    }
+
+
+    public function line()
+    {
+        return $this->belongsTo(Line::class, 'co_lin', 'co_lin');
+    }
+
+
+    public function subl()
+    {
+        return $this->belongsTo(Subl::class, 'co_subl', 'co_subl');
+    }
+
+    /**
+     * Scope para buscar por texto (código o descripción)
+     */
+    public function scopeSearch($query, $search)
+    {
+        if (!$search) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($search) {
+            $q->where('art_des', 'like', "%{$search}%")
+              ->orWhere('co_art', 'like', "%{$search}%");
+        });
+    }
+
+    /**
+     * Scope para filtrar por categoría
+     */
+    public function scopeByCategory($query, $categoryId)
+    {
+        if (!$categoryId) {
+            return $query;
+        }
+
+        return $query->where('co_cat', $categoryId);
+    }
+
+    /**
+     * Scope para filtrar por línea
+     */
+    public function scopeByLine($query, $lineId)
+    {
+        if (!$lineId) {
+            return $query;
+        }
+
+        return $query->where('co_lin', $lineId);
+    }
+
+    /**
+     * Scope para filtrar por sublínea
+     */
+    public function scopeBySubl($query, $sublId)
+    {
+        if (!$sublId) {
+            return $query;
+        }
+
+        return $query->where('co_subl', $sublId);
+    }
+
+    /**
+     * Scope para filtrar por múltiples criterios
+     */
+    public function scopeFilter($query, $filters = [])
+    {
+        return $query->search($filters['search'] ?? null)
+                    ->byCategory($filters['category'] ?? null)
+                    ->byLine($filters['line'] ?? null)
+                    ->bySubl($filters['subl'] ?? null);
+    }
 }

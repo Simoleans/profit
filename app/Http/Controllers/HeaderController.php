@@ -15,6 +15,11 @@ use Illuminate\Support\Facades\Log;
 class HeaderController extends Controller
 {
     /**
+     * Categoría fija para artículos de promoción
+     */
+    const PROMOTION_CATEGORY = 9;
+
+    /**
      * Limpiar agresivamente una cadena para evitar problemas de truncado
      */
     private function cleanString($value, $maxLength)
@@ -51,6 +56,24 @@ class HeaderController extends Controller
 
         return $cleaned;
     }
+
+    /**
+     * Verificar si un artículo pertenece a la categoría de promoción
+     */
+    private function isPromotionArticle($co_art)
+    {
+        $article = Article::where('co_art', $co_art)->first();
+
+        if (!$article) {
+            return false;
+        }
+
+        // Hacer trim al co_cat para eliminar espacios vacíos
+        $cleanCoCat = trim($article->co_cat);
+
+        return $cleanCoCat == self::PROMOTION_CATEGORY;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -185,6 +208,9 @@ class HeaderController extends Controller
                     'uni_venta_length' => strlen($cleanUniVenta)
                 ]);
 
+                // Verificar si el artículo es de promoción
+                $isPromotion = $this->isPromotionArticle($row['co_art']);
+
                 Row::create([
                     'fact_num' => $fact_num,
                     'reng_num' => $index + 1,
@@ -193,7 +219,8 @@ class HeaderController extends Controller
                     'prec_vta' => floatval($row['prec_vta']),
                     'reng_neto' => floatval($row['total_art']) * floatval($row['prec_vta']),
                     'tipo_imp' => 'I', // Solo 1 caracter
-                    'uni_venta' => substr($this->cleanString($cleanUniVenta, 2), 0, 1) // Ultra conservador - 1 caracter
+                    'uni_venta' => substr($this->cleanString($cleanUniVenta, 2), 0, 1), // Ultra conservador - 1 caracter
+                    'promotion' => $isPromotion ? 1 : 0 // Guardar como 1 si es promoción, 0 si no
                 ]);
             }
 
@@ -329,6 +356,9 @@ class HeaderController extends Controller
 
             // Crear nuevos renglones
             foreach ($request->rows as $index => $row) {
+                // Verificar si el artículo es de promoción
+                $isPromotion = $this->isPromotionArticle($row['co_art']);
+
                 Row::create([
                     'fact_num' => $header->fact_num,
                     'reng_num' => $index + 1,
@@ -337,7 +367,8 @@ class HeaderController extends Controller
                     'prec_vta' => floatval($row['prec_vta']),
                     'reng_neto' => floatval($row['total_art']) * floatval($row['prec_vta']),
                     'tipo_imp' => 'I', // Solo 1 caracter
-                    'uni_venta' => substr($this->cleanString($row['uni_venta'] ?? 'UND', 2), 0, 1) // Ultra conservador - 1 caracter
+                    'uni_venta' => substr($this->cleanString($row['uni_venta'] ?? 'UND', 2), 0, 1), // Ultra conservador - 1 caracter
+                    'promotion' => $isPromotion ? 1 : 0 // Guardar como 1 si es promoción, 0 si no
                 ]);
             }
 
