@@ -1,10 +1,20 @@
-<script setup>
-import { Head, Link } from '@inertiajs/vue3'
+<script setup lang="ts">
+import { Head, Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 
 const props = defineProps({
     order: Object
 })
+
+const approveOrder = () => {
+    if (confirm('¿Estás seguro de que deseas aprobar este pedido? Esta acción no se puede deshacer.')) {
+        router.post(`/orders/${props.order.fact_num}/approve`, {}, {
+            onSuccess: () => {
+                // El controlador redirigirá de vuelta a la vista del pedido
+            }
+        })
+    }
+}
 
 const breadcrumbs = [
     {
@@ -99,9 +109,8 @@ const generateWhatsAppMessage = () => {
     message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
 
     props.order.rows.forEach((row, index) => {
-        message += `${index + 1}. *${row.article.art_des}*\n`
+        message += `${index + 1}. *${row.article.art_des}*${row.promotion === 1 ? 'EN PROMOCIÓN' : ''}\n`
         message += `   Código: ${row.article.co_art}\n`
-        message += `   Cantidad: ${row.total_art} ${row.uni_venta}\n`
         message += `   Precio: ${formatCurrency(row.prec_vta)}\n`
         message += `   Total: ${formatCurrency(row.reng_neto)}\n\n`
     })
@@ -163,8 +172,18 @@ const generateWhatsAppMessage = () => {
                         </svg>
                         WhatsApp
                     </button>
+                    <button
+                        v-if="!order.anulada && order.status === 'P'"
+                        @click="approveOrder"
+                        class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                    >
+                        <svg class="-ml-0.5 mr-1.5 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Aprobar
+                    </button>
                     <Link
-                        v-if="!order.anulada"
+                        v-if="!order.anulada && order.status === 'P'"
                         :href="`/orders/${order.fact_num}/edit`"
                         class="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
                     >
@@ -274,8 +293,13 @@ const generateWhatsAppMessage = () => {
                                         <tr v-for="row in order.rows" :key="row.reng_num">
                                             <td class="px-6 py-4">
                                                 <div>
-                                                    <div class="font-medium text-gray-900 dark:text-white">{{ row.article.art_des }}</div>
-                                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ row.article.co_art }}</div>
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="font-medium text-gray-900 dark:text-white">{{ row.article.art_des }}</span>
+
+                                                    </div>
+                                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ row.article.co_art }} <span v-if="row.promotion" class="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900 dark:text-orange-300">
+                                                            En promoción
+                                                        </span></div>
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 text-gray-900 dark:text-white">{{ row.total_art }}</td>

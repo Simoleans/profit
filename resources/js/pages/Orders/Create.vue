@@ -88,19 +88,22 @@ const selectClient = (client) => {
 const addArticle = (article) => {
     const existingIndex = form.rows.findIndex(row => row.co_art === article.co_art)
 
+    // Determinar cantidad por defecto: usar venta_minima si es > 0, sino 1
+    const defaultQuantity = (article.venta_minima && article.venta_minima > 0) ? article.venta_minima : 1
+
     if (existingIndex >= 0) {
-        // Si ya existe, incrementar cantidad
-        form.rows[existingIndex].total_art++
+        // Si ya existe, incrementar cantidad con venta_minima
+        form.rows[existingIndex].total_art += defaultQuantity
         calculateRowTotal(existingIndex)
     } else {
         // Agregar nuevo al inicio de la lista
         form.rows.unshift({
             co_art: article.co_art,
             art_des: article.art_des,
-            total_art: 1,
+            total_art: defaultQuantity,
             prec_vta: article.prec_vta1,
             uni_venta: article.uni_venta,
-            reng_neto: article.prec_vta1
+            reng_neto: article.prec_vta1 * defaultQuantity
         })
     }
 
@@ -254,7 +257,7 @@ const submit = () => {
                                 v-model="form.comentario"
                                 placeholder="Comentarios adicionales..."
                                 rows="3"
-                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                                class="block w-full rounded-md border-0 py-2 placeholder:p-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
                             ></textarea>
                         </div>
                     </div>
@@ -316,7 +319,7 @@ const submit = () => {
                                                             {{ article.co_art }}
                                                         </span>
                                                         <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300">
-                                                            Stock: {{ article.stock_act }} {{ article.uni_venta }}
+                                                            Stock: {{ Math.floor(article.stock_act) }}
                                                         </span>
                                                     </div>
                                                 </div>

@@ -2,19 +2,30 @@ import { onMounted, ref } from 'vue';
 
 type Appearance = 'light' | 'dark' | 'system';
 
-export function updateTheme(value: Appearance) {
+// CÓDIGO ORIGINAL COMENTADO - Sistema de temas dinámico
+// export function updateTheme(value: Appearance) {
+//     if (typeof window === 'undefined') {
+//         return;
+//     }
+
+//     if (value === 'system') {
+//         const mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+//         const systemTheme = mediaQueryList.matches ? 'dark' : 'light';
+
+//         document.documentElement.classList.toggle('dark', systemTheme === 'dark');
+//     } else {
+//         document.documentElement.classList.toggle('dark', value === 'dark');
+//     }
+// }
+
+// NUEVO CÓDIGO - Siempre forzar tema claro
+export function updateTheme() {
     if (typeof window === 'undefined') {
         return;
     }
 
-    if (value === 'system') {
-        const mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
-        const systemTheme = mediaQueryList.matches ? 'dark' : 'light';
-
-        document.documentElement.classList.toggle('dark', systemTheme === 'dark');
-    } else {
-        document.documentElement.classList.toggle('dark', value === 'dark');
-    }
+    // Siempre forzar tema claro
+    document.documentElement.classList.remove('dark');
 }
 
 const setCookie = (name: string, value: string, days = 365) => {
@@ -27,62 +38,103 @@ const setCookie = (name: string, value: string, days = 365) => {
     document.cookie = `${name}=${value};path=/;max-age=${maxAge};SameSite=Lax`;
 };
 
-const mediaQuery = () => {
-    if (typeof window === 'undefined') {
-        return null;
-    }
+// CÓDIGO ORIGINAL COMENTADO - Funciones para detectar tema del sistema
+// const mediaQuery = () => {
+//     if (typeof window === 'undefined') {
+//         return null;
+//     }
 
-    return window.matchMedia('(prefers-color-scheme: dark)');
-};
+//     return window.matchMedia('(prefers-color-scheme: dark)');
+// };
 
-const getStoredAppearance = () => {
-    if (typeof window === 'undefined') {
-        return null;
-    }
+// const getStoredAppearance = () => {
+//     if (typeof window === 'undefined') {
+//         return null;
+//     }
 
-    return localStorage.getItem('appearance') as Appearance | null;
-};
+//     return localStorage.getItem('appearance') as Appearance | null;
+// };
 
-const handleSystemThemeChange = () => {
-    const currentAppearance = getStoredAppearance();
+// const handleSystemThemeChange = () => {
+//     const currentAppearance = getStoredAppearance();
 
-    updateTheme(currentAppearance || 'system');
-};
+//     updateTheme(currentAppearance || 'system');
+// };
 
+// CÓDIGO ORIGINAL COMENTADO - Inicialización con tema guardado o del sistema
+// export function initializeTheme() {
+//     if (typeof window === 'undefined') {
+//         return;
+//     }
+
+//     // Initialize theme from saved preference or default to system...
+//     const savedAppearance = getStoredAppearance();
+//     updateTheme(savedAppearance || 'system');
+
+//     // Set up system theme change listener...
+//     mediaQuery()?.addEventListener('change', handleSystemThemeChange);
+// }
+
+// NUEVO CÓDIGO - Siempre inicializar con tema claro
 export function initializeTheme() {
     if (typeof window === 'undefined') {
         return;
     }
 
-    // Initialize theme from saved preference or default to system...
-    const savedAppearance = getStoredAppearance();
-    updateTheme(savedAppearance || 'system');
-
-    // Set up system theme change listener...
-    mediaQuery()?.addEventListener('change', handleSystemThemeChange);
+    // Siempre inicializar con tema claro
+    updateTheme();
 }
 
-const appearance = ref<Appearance>('system');
+// CÓDIGO ORIGINAL COMENTADO - Manejo dinámico de apariencia
+// const appearance = ref<Appearance>('system');
+
+// export function useAppearance() {
+//     onMounted(() => {
+//         const savedAppearance = localStorage.getItem('appearance') as Appearance | null;
+
+//         if (savedAppearance) {
+//             appearance.value = savedAppearance;
+//         }
+//     });
+
+//     function updateAppearance(value: Appearance) {
+//         appearance.value = value;
+
+//         // Store in localStorage for client-side persistence...
+//         localStorage.setItem('appearance', value);
+
+//         // Store in cookie for SSR...
+//         setCookie('appearance', value);
+
+//         updateTheme(value);
+//     }
+
+//     return {
+//         appearance,
+//         updateAppearance,
+//     };
+// }
+
+// NUEVO CÓDIGO - Siempre forzar tema claro
+const appearance = ref<Appearance>('light');
 
 export function useAppearance() {
     onMounted(() => {
-        const savedAppearance = localStorage.getItem('appearance') as Appearance | null;
-
-        if (savedAppearance) {
-            appearance.value = savedAppearance;
-        }
+        // Siempre forzar tema claro
+        appearance.value = 'light';
     });
 
-    function updateAppearance(value: Appearance) {
-        appearance.value = value;
+    function updateAppearance() {
+        // Siempre forzar tema claro
+        appearance.value = 'light';
 
         // Store in localStorage for client-side persistence...
-        localStorage.setItem('appearance', value);
+        localStorage.setItem('appearance', 'light');
 
         // Store in cookie for SSR...
-        setCookie('appearance', value);
+        setCookie('appearance', 'light');
 
-        updateTheme(value);
+        updateTheme();
     }
 
     return {

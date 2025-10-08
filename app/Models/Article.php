@@ -16,6 +16,8 @@ class Article extends Model
     protected $fillable = [
         'co_art',
         'art_des',
+        'descrip_adi',
+        'medidas',
         'co_lin',
         'co_cat',
         'co_subl',
@@ -34,7 +36,8 @@ class Article extends Model
         'prec_vta2',
         'prec_vta3',
         'prec_vta4',
-        'prec_vta5'
+        'prec_vta5',
+        'venta_minima'
     ];
 
 

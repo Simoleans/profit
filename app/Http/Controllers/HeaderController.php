@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Header;
 use App\Models\Row;
 use App\Models\{Client, User, Article};
+use App\Mail\OrderNotificationMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -226,6 +228,12 @@ class HeaderController extends Controller
 
             DB::commit();
 
+            // Refrescar el objeto para obtener el fact_num y relaciones
+            $header->refresh();
+
+            // Enviar correo de notificación al cliente si tiene email
+            $this->sendOrderNotificationEmail($header);
+
             return redirect()->route('orders.index')->with('success', "Pedido #{$fact_num} creado exitosamente");
 
         } catch (\Exception $e) {
@@ -284,6 +292,11 @@ class HeaderController extends Controller
             return back()->withErrors(['error' => 'No se puede editar un pedido anulado']);
         }
 
+        // Solo permitir edición si está en estado pendiente
+        if ($header->status !== 'P') {
+            return back()->withErrors(['error' => 'Solo se pueden editar pedidos pendientes']);
+        }
+
         $header->load(['client', 'rows.article']); // Quitar seller
 
         // Cargar vendedor manualmente desde MySQL
@@ -307,6 +320,11 @@ class HeaderController extends Controller
 
         if ($header->anulada) {
             return back()->withErrors(['error' => 'No se puede actualizar un pedido anulado']);
+        }
+
+        // Solo permitir actualización si está en estado pendiente
+        if ($header->status !== 'P') {
+            return back()->withErrors(['error' => 'Solo se pueden actualizar pedidos pendientes']);
         }
 
         $request->validate([
@@ -484,8 +502,143 @@ class HeaderController extends Controller
             })
             ->where('stock_act', '>', 0) // Solo artículos con stock
             ->limit(20)
-            ->get(['co_art', 'art_des', 'uni_venta', 'prec_vta1', 'stock_act']);
+            ->get(['co_art', 'art_des', 'uni_venta', 'prec_vta1', 'stock_act', 'venta_minima']);
 
         return response()->json($articles);
+    }
+
+    /**
+     * Aprobar un pedido
+     */
+    public function approve($fact_num)
+    {
+        // Buscar el pedido directamente por fact_num y vendedor
+        $header = Header::where('fact_num', $fact_num)
+            ->where('co_ven', Auth::user()->co_ven)
+            ->firstOrFail();
+
+        // Verificar que no esté anulado
+        if ($header->anulada) {
+            return back()->withErrors(['error' => 'No se puede aprobar un pedido anulado']);
+        }
+
+        // Verificar que esté en estado pendiente
+        if ($header->status !== 'P') {
+            return back()->withErrors(['error' => 'Solo se pueden aprobar pedidos pendientes']);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Cambiar estado a aprobado
+            $header->update(['status' => 'A']);
+
+            DB::commit();
+
+            // Cargar relaciones necesarias para el correo
+            $header->load(['rows.article', 'client']);
+
+            // Enviar correo de aprobación al cliente si tiene email
+            $this->sendApprovalEmail($header);
+
+            return redirect()->route('orders.show', $fact_num)
+                ->with('success', 'Pedido aprobado exitosamente');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->withErrors(['error' => 'Error al aprobar el pedido: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Enviar correo de aprobación al cliente
+     */
+    private function sendApprovalEmail(Header $order)
+    {
+        try {
+            // Verificar que el cliente existe
+            if (!$order->client) {
+                Log::warning("No se encontró el cliente para la orden #{$order->fact_num}");
+                return;
+            }
+
+            // Obtener el email del cliente y hacer trim
+            $clientEmail = trim($order->client->email ?? '');
+
+            // Si no tiene email, no enviar correo
+            if (empty($clientEmail)) {
+                Log::info("Cliente {$order->client->cli_des} no tiene email configurado, no se enviará notificación de aprobación");
+                return;
+            }
+
+            // Validar formato básico del email
+            if (!filter_var($clientEmail, FILTER_VALIDATE_EMAIL)) {
+                Log::warning("Email inválido para cliente {$order->client->cli_des}: {$clientEmail}");
+                return;
+            }
+
+            // Enviar el correo
+            Mail::to($clientEmail)->send(new OrderNotificationMail(
+                $order,
+                $clientEmail,
+                $order->client->cli_des,
+                'A'
+            ));
+
+            Log::info("Correo de aprobación enviado exitosamente al cliente {$order->client->cli_des} ({$clientEmail}) para la orden #{$order->fact_num}");
+
+        } catch (\Exception $e) {
+            Log::error("Error al enviar correo de aprobación para la orden #{$order->fact_num}: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Enviar correo de notificación al cliente sobre su nueva orden
+     */
+    private function sendOrderNotificationEmail(Header $order)
+    {
+        try {
+            // Debug: Verificar que el fact_num existe
+            Log::info("Enviando correo para orden #{$order->fact_num} con co_cli: {$order->co_cli}");
+
+            // Cargar las relaciones necesarias para el correo
+            $order->load(['rows.article', 'client']);
+
+            // Verificar que el cliente existe
+            if (!$order->client) {
+                Log::warning("No se encontró el cliente para la orden #{$order->fact_num} (co_cli: {$order->co_cli})");
+                return;
+            }
+
+            // Obtener el email del cliente y hacer trim
+            $clientEmail = trim($order->client->email ?? '');
+
+            if (empty($clientEmail)) {
+                Log::info("Cliente {$order->client->cli_des} no tiene email configurado, no se enviará notificación");
+                return;
+            }
+
+            // Validar formato básico del email
+            if (!filter_var($clientEmail, FILTER_VALIDATE_EMAIL)) {
+                Log::warning("Email inválido para cliente {$order->client->cli_des}: {$clientEmail}");
+                return;
+            }
+
+            // Debug: Verificar que los renglones se cargaron
+            Log::info("Orden #{$order->fact_num} tiene " . $order->rows->count() . " renglones");
+
+            // Enviar el correo
+            Mail::to($clientEmail)->send(new OrderNotificationMail(
+                $order,
+                $clientEmail,
+                $order->client->cli_des
+            ));
+
+            Log::info("Correo de notificación enviado exitosamente al cliente {$order->client->cli_des} ({$clientEmail}) para la orden #{$order->fact_num}");
+
+        } catch (\Exception $e) {
+            Log::error("Error al enviar correo de notificación para la orden #{$order->fact_num}: " . $e->getMessage());
+            // No lanzar la excepción para que no afecte la creación de la orden
+        }
     }
 }

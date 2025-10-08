@@ -242,7 +242,7 @@ const deleteOrder = (order) => {
                                             <span class="sr-only">Ver pedido</span>
                                         </Link>
                                         <Link
-                                            v-if="!order.anulada"
+                                            v-if="!order.anulada && order.status === 'P'"
                                             :href="`/orders/${order.fact_num}/edit`"
                                             class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
                                             title="Editar"

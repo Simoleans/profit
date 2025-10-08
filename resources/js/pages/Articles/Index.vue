@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import ShowArticle from '@/components/ShowArticle.vue';
 import { ref, watch } from 'vue';
 
 // Props recibidas del controlador
@@ -233,24 +234,31 @@ const goToPage = (url) => {
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                     Descripción
                                 </th>
-                                <th scope="col" class="hidden px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 sm:table-cell">
-                                    Categoría
-                                </th>
                                 <th scope="col" class="hidden px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 md:table-cell">
                                     Línea
                                 </th>
-                                <th scope="col" class="hidden px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 lg:table-cell">
-                                    Sublínea
+                                <th scope="col" class="hidden px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 md:table-cell">
+                                    Precio Venta
                                 </th>
                                 <th scope="col" class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                    Precio Venta
+                                    Acciones
                                 </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
                             <!-- Estado vacío -->
                             <tr v-if="articles.data.length === 0">
-                                <td colspan="6" class="px-6 py-12 text-center">
+                                <td colspan="3" class="px-6 py-12 text-center md:hidden">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                        <span class="text-gray-500 dark:text-gray-400">
+                                            {{ searchQuery ? 'No se encontraron artículos con ese criterio' : 'No hay artículos disponibles' }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td colspan="5" class="hidden px-6 py-12 text-center md:table-cell">
                                     <div class="flex flex-col items-center gap-2">
                                         <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -268,50 +276,47 @@ const goToPage = (url) => {
                                     {{ article.co_art }}
                                 </td>
                                 <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                                    <div class="flex flex-col">
-                                        <div class="flex items-center gap-1">
-                                            <span>{{ article.art_des }}</span>
-                                            <!-- Indicador de stock pequeño -->
-                                            <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-medium"
+                                    <div class="flex flex-col gap-1">
+                                        <span>{{ article.art_des }}</span>
+
+                                        <!-- Indicadores: Stock y Promoción -->
+                                        <div class="flex flex-wrap items-center gap-1">
+                                            <!-- Indicador de stock -->
+                                            <span class="inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[10px] font-medium"
                                                   :class="article.stock_act > 0
                                                     ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
                                                     : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'">
-                                                {{ article.stock_act > 0 ? `Stock: ${article.stock_act}` : 'SIN STOCK' }}
+                                                {{ article.stock_act > 0 ? `Stock: ${Math.floor(article.stock_act)}` : 'SIN STOCK' }}
+                                            </span>
+
+                                            <!-- Etiqueta de promoción si co_cat = 9 -->
+                                            <span v-if="article.co_cat?.toString().trim() === '9'" class="inline-flex w-fit items-center rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-700 dark:bg-orange-900 dark:text-orange-300">
+                                                En promoción
                                             </span>
                                         </div>
-                                        <!-- En móvil, mostrar categoría, línea y sublínea debajo de la descripción -->
-                                        <div class="mt-1 sm:hidden space-y-1">
-                                            <div class="text-xs text-gray-500 dark:text-gray-400">
-                                                <span class="font-medium">Categoría:</span> {{ article.category?.cat_des || 'Sin categoría' }}
-                                            </div>
-                                            <div class="text-xs text-gray-500 dark:text-gray-400">
-                                                <span class="font-medium">Línea:</span> {{ article.line?.lin_des || 'Sin línea' }}
-                                            </div>
-                                            <div class="text-xs text-gray-500 dark:text-gray-400">
-                                                <span class="font-medium">Sublínea:</span> {{ article.subl?.subl_des || 'Sin sublínea' }}
-                                            </div>
+
+                                        <!-- Precio en móvil -->
+                                        <div class="mt-1 md:hidden">
+                                            <span class="inline-flex items-center rounded-lg bg-green-100 px-3 py-1.5 text-sm font-bold text-green-800 shadow-sm dark:bg-green-900 dark:text-green-300">
+                                                {{ formatPrice(article.prec_vta1) }}
+                                            </span>
                                         </div>
                                     </div>
-                                </td>
-                                <td class="hidden whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400 sm:table-cell">
-                                    <span class="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900 dark:text-orange-300">
-                                        {{ article.category?.cat_des || 'Sin categoría' }}
-                                    </span>
                                 </td>
                                 <td class="hidden whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400 md:table-cell">
                                     <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                                         {{ article.line?.lin_des || 'Sin línea' }}
                                     </span>
                                 </td>
-                                <td class="hidden whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400 lg:table-cell">
-                                    <span class="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900 dark:text-purple-300">
-                                        {{ article.subl?.subl_des || 'Sin sublínea' }}
-                                    </span>
-                                </td>
-                                <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                                <td class="hidden whitespace-nowrap px-6 py-4 text-right text-sm font-medium md:table-cell">
                                     <span class="inline-flex items-center rounded-lg bg-green-100 px-3 py-1.5 text-sm font-bold text-green-800 shadow-sm dark:bg-green-900 dark:text-green-300">
                                         {{ formatPrice(article.prec_vta1) }}
                                     </span>
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <ShowArticle :article="article" />
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>

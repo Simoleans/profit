@@ -30,10 +30,13 @@ Route::get('orders/{fact_num}', [HeaderController::class, 'show'])->middleware([
 Route::get('orders/{fact_num}/edit', [HeaderController::class, 'edit'])->middleware(['auth'])->name('orders.edit');
 Route::put('orders/{fact_num}', [HeaderController::class, 'update'])->middleware(['auth'])->name('orders.update');
 Route::delete('orders/{fact_num}', [HeaderController::class, 'destroy'])->middleware(['auth'])->name('orders.destroy');
+Route::post('orders/{fact_num}/approve', [HeaderController::class, 'approve'])->middleware(['auth'])->name('orders.approve');
 Route::get('search-clients', [HeaderController::class, 'searchClients'])->middleware(['auth'])->name('search.clients');
 Route::get('search-articles', [HeaderController::class, 'searchArticles'])->middleware(['auth'])->name('search.articles');
 Route::get('check-client', [HeaderController::class, 'checkClient'])->middleware(['auth'])->name('check.client');
 Route::get('debug-user-data', [HeaderController::class, 'debugUserData'])->middleware(['auth'])->name('debug.user.data');
+
+
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

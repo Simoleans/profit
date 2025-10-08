@@ -26,17 +26,20 @@ class ArticleController extends Controller
 
         // Aplicar filtros usando scopes
         $articles = Article::query()
-            ->with(['category', 'line', 'subl'])
+            ->select(['co_art', 'art_des', 'stock_act', 'prec_vta1', 'co_lin', 'co_subl', 'co_cat'])
+            ->with([
+                'line:co_lin,lin_des'
+            ])
             ->filter($filters)
             ->orderBy('art_des')
             ->paginate(15)
             ->withQueryString();
 
-        // Obtener datos para los filtros (solo una vez al cargar la página)
+        // Obtener datos para los filtros
         $filterOptions = [
-            'categories' => Category::orderBy('cat_des')->get(),
-            'lines' => Line::orderBy('lin_des')->get(),
-            'subls' => Subl::orderBy('subl_des')->get(),
+            'categories' => Category::select('co_cat', 'cat_des')->orderBy('cat_des')->get(),
+            'lines' => Line::select('co_lin', 'lin_des')->orderBy('lin_des')->get(),
+            'subls' => Subl::select('co_subl', 'subl_des')->orderBy('subl_des')->get(),
         ];
 
         return Inertia::render('Articles/Index', [
@@ -70,7 +73,22 @@ class ArticleController extends Controller
      */
     public function show(string $id)
     {
-        //
+        try {
+            $article = Article::with([
+                'category:co_cat,cat_des',
+                'line:co_lin,lin_des',
+                'subl:co_subl,subl_des'
+            ])
+            ->where('co_art', $id)
+            ->firstOrFail();
+
+            return response()->json($article);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Artículo no encontrado',
+                'message' => $e->getMessage()
+            ], 404);
+        }
     }
 
     /**

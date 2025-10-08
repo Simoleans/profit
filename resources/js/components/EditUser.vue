@@ -58,7 +58,9 @@ const submitForm = () => {
         updateData.password_confirmation = form.value.password_confirmation;
     }
 
-    router.put(`/users/${props.user.id}`, updateData, {
+    console.log('Update data:', updateData);
+
+    router.put(`/users/${props.user.co_ven}`, updateData, {
         onSuccess: () => {
             isOpen.value = false;
             processing.value = false;
