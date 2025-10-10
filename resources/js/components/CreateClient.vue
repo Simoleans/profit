@@ -27,6 +27,7 @@ const form = ref({
     respons: '',        // Responsable
     email: '',          // Email
     ciudad: '',         // Ciudad
+    document: null,     // Documento adjunto
     // co_ven se asigna automáticamente del usuario logueado
     // co_cli se deja vacío para autoincremento
 });
@@ -34,6 +35,7 @@ const form = ref({
 const errors = ref({});
 const processing = ref(false);
 const isOpen = ref(false);
+const selectedFileName = ref('');
 
 // Función para validar formato de RIF/Cédula
 const isValidRifFormat = computed(() => {
@@ -88,12 +90,58 @@ const buttonText = computed(() => {
     return `Faltan ${missingFields.value.length} campos`;
 });
 
+// Función para manejar el archivo seleccionado
+const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        // Validar tamaño (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            errors.value.document = 'El archivo no puede exceder 10MB';
+            event.target.value = '';
+            return;
+        }
+
+        // Validar tipo de archivo
+        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            errors.value.document = 'Solo se permiten archivos PDF, Word o imágenes (JPG, PNG, WEBP)';
+            event.target.value = '';
+            return;
+        }
+
+        form.value.document = file;
+        selectedFileName.value = file.name;
+        delete errors.value.document;
+    } else {
+        form.value.document = null;
+        selectedFileName.value = '';
+    }
+};
+
+// Función para eliminar el archivo seleccionado
+const removeFile = () => {
+    form.value.document = null;
+    selectedFileName.value = '';
+    delete errors.value.document;
+    // Limpiar el input file
+    const fileInput = document.getElementById('document');
+    if (fileInput) fileInput.value = '';
+};
+
 // Función para enviar el formulario
 const submitForm = () => {
     processing.value = true;
     errors.value = {};
 
-    router.post('/clients', form.value, {
+    // Usar FormData para enviar archivos
+    const formData = new FormData();
+    Object.keys(form.value).forEach(key => {
+        if (form.value[key] !== null && form.value[key] !== '') {
+            formData.append(key, form.value[key]);
+        }
+    });
+
+    router.post('/clients', formData, {
         onSuccess: () => {
             // Resetear formulario y cerrar modal
             resetForm();
@@ -120,8 +168,13 @@ const resetForm = () => {
         respons: '',
         email: '',
         ciudad: '',
+        document: null,
     };
+    selectedFileName.value = '';
     errors.value = {};
+    // Limpiar el input file
+    const fileInput = document.getElementById('document');
+    if (fileInput) fileInput.value = '';
 };
 
 // Función para formatear RIF/Cédula
@@ -291,6 +344,44 @@ const formatEmail = () => {
                             maxlength="30"
                         />
                         <InputError :message="errors.ciudad" />
+                    </div>
+
+                    <!-- Documento adjunto -->
+                    <div class="grid gap-2">
+                        <Label for="document">Documento Adjunto (Opcional)</Label>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <Input
+                                    id="document"
+                                    type="file"
+                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                                    @change="handleFileChange"
+                                    class="cursor-pointer"
+                                />
+                            </div>
+
+                            <!-- Nombre del archivo seleccionado -->
+                            <div v-if="selectedFileName" class="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md">
+                                <svg class="h-5 w-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <span class="flex-1 text-sm text-gray-700 dark:text-gray-300 truncate">{{ selectedFileName }}</span>
+                                <button
+                                    type="button"
+                                    @click="removeFile"
+                                    class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                >
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <InputError :message="errors.document" />
+                            <p class="text-sm text-gray-500">
+                                Formatos permitidos: PDF, Word, JPG, PNG, WEBP (máx. 10MB)
+                            </p>
+                        </div>
                     </div>
                 </div>
 

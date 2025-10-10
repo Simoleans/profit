@@ -6,7 +6,12 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Client;
 use App\Models\ClientTemp;
+use App\Models\Media;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use App\Http\Requests\StoreClientRequest;
+use App\Http\Requests\UpdateClientRequest;
 
 class ClientController extends Controller
 {
@@ -32,6 +37,7 @@ class ClientController extends Controller
             }
         }
 
+
         return Inertia::render('Clients/Index', [
             'clients' => $clients,
             'search' => $search,
@@ -50,34 +56,10 @@ class ClientController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreClientRequest $request)
     {
-        // Validar los datos del formulario
-        $validated = $request->validate([
-            'cli_des' => 'required|string|max:60',
-            'rif' => 'required|unique:sqlsrv.clientes_temp,rif',
-            'direc1' => 'required|string|max:120',
-            'telefonos' => 'required|string|max:30',
-            'respons' => 'required|string|max:60',
-            'email' => 'required|email|max:120',
-            'ciudad' => 'required|string|max:30',
-        ], [
-            'cli_des.required' => 'El nombre o razón social es obligatorio.',
-            'cli_des.max' => 'El nombre no puede exceder 60 caracteres.',
-            'rif.required' => 'El RIF/Cédula es obligatorio.',
-            'rif.unique' => 'Este RIF/Cédula ya está registrado en el sistema.',
-            'direc1.required' => 'La dirección es obligatoria.',
-            'direc1.max' => 'La dirección no puede exceder 120 caracteres.',
-            'telefonos.required' => 'Los teléfonos son obligatorios.',
-            'telefonos.max' => 'Los teléfonos no pueden exceder 30 caracteres.',
-            'respons.required' => 'El responsable es obligatorio.',
-            'respons.max' => 'El responsable no puede exceder 60 caracteres.',
-            'email.required' => 'El email es obligatorio.',
-            'email.email' => 'El email debe tener un formato válido.',
-            'email.max' => 'El email no puede exceder 120 caracteres.',
-            'ciudad.required' => 'La ciudad es obligatoria.',
-            'ciudad.max' => 'La ciudad no puede exceder 30 caracteres.',
-        ]);
+        // Los datos ya vienen validados del StoreClientRequest
+        $validated = $request->validated();
 
         $user = Auth::user();
 
@@ -94,6 +76,26 @@ class ClientController extends Controller
             // Crear el cliente en tabla temporal
             $client = ClientTemp::create($validated);
 
+            // Manejar la carga del documento si existe
+            if ($request->hasFile('document')) {
+                $file = $request->file('document');
+
+                // Generar nombre único para el archivo
+                $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+
+                // Guardar el archivo en storage/app/client-documents
+                $path = $file->storeAs('client-documents', $fileName, 'local');
+
+                // Crear registro en la tabla media usando la relación (automáticamente usa rif)
+                $client->media()->create([
+                    'path' => $path,
+                    'original_name' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                    'visibility' => 'private',
+                ]);
+            }
+
             return redirect()->route('clients.index')->with('success', 'Cliente registrado exitosamente.');
 
         } catch (\Exception $e) {
@@ -109,20 +111,44 @@ class ClientController extends Controller
         $user = Auth::user();
         $tab = $request->get('tab', 'processed'); // 'processed' o 'temp'
 
-        $rif = urldecode(trim($id)); // Decodificar URL y limpiar espacios
+        $rif = urldecode(trim($id));
 
         try {
             if($tab === 'temp') {
-                // Buscar en tabla temporal
-                $client = ClientTemp::where('rif', $rif)->firstOrFail();
+                // Buscar en tabla temporal con relación media
+                $client = ClientTemp::where('rif', $rif)->with('media')->firstOrFail();
             } else {
-                // Buscar en tabla principal
-                $client = Client::where('rif', $rif)->firstOrFail();
+                // Buscar en tabla principal con relación media
+                $client = Client::where('rif', $rif)->with('media')->firstOrFail();
             }
 
             return response()->json($client);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['error' => 'Cliente no encontrado'], 404);
+        }
+    }
+
+    /**
+     * Descargar documento del cliente
+     */
+    public function downloadDocument(string $mediaId)
+    {
+        try {
+            $media = Media::findOrFail($mediaId);
+
+            // Obtener la ruta completa del archivo usando Storage
+            $filePath = Storage::disk('local')->path($media->path);
+
+            // Verificar que el archivo existe
+            if (!file_exists($filePath)) {
+                return response()->json(['error' => 'Archivo no encontrado en: ' . $filePath], 404);
+            }
+
+            // Descargar el archivo
+            return response()->download($filePath, $media->original_name);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al descargar el archivo: ' . $e->getMessage()], 500);
         }
     }
 
@@ -137,38 +163,14 @@ class ClientController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateClientRequest $request, string $id)
     {
-        // Validar los datos del formulario
-        $validated = $request->validate([
-            'cli_des' => 'required|string|max:60',
-            'rif' => 'required|unique:sqlsrv.clientes_temp,rif,' . urldecode(trim($id)) . ',rif',
-            'direc1' => 'required|string|max:120',
-            'telefonos' => 'required|string|max:30',
-            'respons' => 'required|string|max:60',
-            'email' => 'required|email|max:120',
-            'ciudad' => 'required|string|max:30',
-        ], [
-            'cli_des.required' => 'El nombre o razón social es obligatorio.',
-            'cli_des.max' => 'El nombre no puede exceder 60 caracteres.',
-            'rif.required' => 'El RIF/Cédula es obligatorio.',
-            'rif.unique' => 'Este RIF/Cédula ya está registrado en el sistema.',
-            'direc1.required' => 'La dirección es obligatoria.',
-            'direc1.max' => 'La dirección no puede exceder 120 caracteres.',
-            'telefonos.required' => 'Los teléfonos son obligatorios.',
-            'telefonos.max' => 'Los teléfonos no pueden exceder 30 caracteres.',
-            'respons.required' => 'El responsable es obligatorio.',
-            'respons.max' => 'El responsable no puede exceder 60 caracteres.',
-            'email.required' => 'El email es obligatorio.',
-            'email.email' => 'El email debe tener un formato válido.',
-            'email.max' => 'El email no puede exceder 120 caracteres.',
-            'ciudad.required' => 'La ciudad es obligatoria.',
-            'ciudad.max' => 'La ciudad no puede exceder 30 caracteres.',
-        ]);
+        // Los datos ya vienen validados del UpdateClientRequest
+        $validated = $request->validated();
 
         try {
             // Buscar el cliente por RIF en tabla temporal
-            $rif = urldecode(trim($id)); // Decodificar URL y limpiar espacios
+            $rif = urldecode(trim($id));
             $client = ClientTemp::where('rif', $rif)->firstOrFail();
 
             // Actualizar el cliente en tabla temporal
@@ -188,10 +190,9 @@ class ClientController extends Controller
     {
         try {
             // Buscar el cliente por RIF
-            $rif = urldecode(trim($id)); // Decodificar URL y limpiar espacios
+            $rif = urldecode(trim($id));
             $client = Client::where('rif', $rif)->firstOrFail();
 
-            // Soft delete: cambiar status a 0
             $client->update(['status' => 0]);
 
             return redirect()->route('clients.index')->with('success', 'Cliente desactivado exitosamente.');

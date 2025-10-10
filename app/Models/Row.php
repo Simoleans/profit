@@ -25,7 +25,7 @@ class Row extends Model
     ];
 
     protected $casts = [
-        'total_art' => 'decimal:2',
+        'total_art' => 'integer',  // Cantidad debe ser entero
         'prec_vta' => 'decimal:2',
         'reng_neto' => 'decimal:2',
         'promotion' => 'boolean'

@@ -122,6 +122,7 @@ const goToPage = (url) => {
                     </nav>
                 </div>
 
+
                 <!-- Header del card con búsqueda -->
                 <div class="border-b border-gray-200 bg-white px-4 py-5 dark:border-gray-700 dark:bg-gray-800 sm:px-6">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -198,6 +199,7 @@ const goToPage = (url) => {
                                 <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
                                     <div class="flex flex-col">
                                         <span>{{ client.cli_des }}</span>
+                                        <small class="text-xs text-gray-500">{{ client.rif }}</small>
                                         <!-- En móvil, mostrar la dirección debajo del nombre -->
                                         <div class="mt-1 sm:hidden">
                                             <span class="text-xs text-gray-500 dark:text-gray-400">

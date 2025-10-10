@@ -62,6 +62,48 @@ const loadClientDetails = async () => {
 const formatField = (value) => {
     return value && value.trim() ? value : 'No especificado';
 };
+
+// Función para descargar documento
+const downloadDocument = async (mediaId) => {
+    try {
+        window.location.href = `/clients/media/${mediaId}/download`;
+    } catch (err) {
+        console.error('Error descargando documento:', err);
+    }
+};
+
+// Función para obtener el icono según el tipo de archivo
+const getFileIcon = (mimeType) => {
+    if (mimeType.includes('pdf')) {
+        return 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z';
+    } else if (mimeType.includes('word') || mimeType.includes('document')) {
+        return 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z';
+    } else if (mimeType.includes('image')) {
+        return 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z';
+    }
+    return 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z';
+};
+
+// Función para obtener el color según el tipo de archivo
+const getFileColor = (mimeType) => {
+    if (mimeType.includes('pdf')) {
+        return 'text-red-600 dark:text-red-400';
+    } else if (mimeType.includes('word') || mimeType.includes('document')) {
+        return 'text-blue-600 dark:text-blue-400';
+    } else if (mimeType.includes('image')) {
+        return 'text-green-600 dark:text-green-400';
+    }
+    return 'text-gray-600 dark:text-gray-400';
+};
+
+// Función para formatear el tamaño del archivo
+const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+};
 </script>
 
 <template>
@@ -212,6 +254,65 @@ const formatField = (value) => {
                     <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">Código Vendedor Asignado</Label>
                     <div class="rounded-md bg-blue-50 px-3 py-2 text-sm font-mono text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                         {{ clientDetails.co_ven }}
+                    </div>
+                </div>
+
+                <!-- Documentos Adjuntos -->
+                <div v-if="clientDetails.media && clientDetails.media.length > 0" class="space-y-2">
+                    <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">Documentos Adjuntos</Label>
+                    <div class="space-y-2">
+                        <div
+                            v-for="media in clientDetails.media"
+                            :key="media.id"
+                            class="flex items-center justify-between p-3 rounded-md bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                        >
+                            <div class="flex items-center gap-3 flex-1 min-w-0">
+                                <svg
+                                    class="h-8 w-8 flex-shrink-0"
+                                    :class="getFileColor(media.mime_type)"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        :d="getFileIcon(media.mime_type)"
+                                    />
+                                </svg>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                        {{ media.original_name }}
+                                    </p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        {{ formatFileSize(media.size) }}
+                                    </p>
+                                </div>
+                            </div>
+                            <Button
+                                type="button"
+                                size="sm"
+                                @click="downloadDocument(media.id)"
+                                class="flex-shrink-0 ml-2"
+                            >
+                                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Descargar
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sin documentos -->
+                <div v-else class="space-y-2">
+                    <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">Documentos Adjuntos</Label>
+                    <div class="rounded-md bg-gray-50 px-3 py-4 text-sm text-gray-500 dark:bg-gray-700 dark:text-gray-400 text-center">
+                        <svg class="h-12 w-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        No hay documentos adjuntos
                     </div>
                 </div>
             </div>

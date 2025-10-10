@@ -1,6 +1,6 @@
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -88,15 +88,16 @@ const selectClient = (client) => {
 const addArticle = (article) => {
     const existingIndex = form.rows.findIndex(row => row.co_art === article.co_art)
 
-    // Determinar cantidad por defecto: usar venta_minima si es > 0, sino 1
-    const defaultQuantity = (article.venta_minima && article.venta_minima > 0) ? article.venta_minima : 1
+    // venta_minima ya viene como entero desde el modelo
+    const defaultQuantity = article.venta_minima || 1
 
     if (existingIndex >= 0) {
         // Si ya existe, incrementar cantidad con venta_minima
-        form.rows[existingIndex].total_art += defaultQuantity
+        form.rows[existingIndex].total_art = Math.floor(form.rows[existingIndex].total_art) + defaultQuantity
         calculateRowTotal(existingIndex)
     } else {
         // Agregar nuevo al inicio de la lista
+        // prec_vta1 ya viene con 2 decimales desde el modelo
         form.rows.unshift({
             co_art: article.co_art,
             art_des: article.art_des,
@@ -114,7 +115,9 @@ const addArticle = (article) => {
 // Calcular total de línea
 const calculateRowTotal = (index) => {
     const row = form.rows[index]
-    const quantity = parseFloat(row.total_art) || 0
+    // Asegurar que cantidad sea entero
+    row.total_art = Math.floor(parseFloat(row.total_art) || 1)
+    const quantity = row.total_art
     const price = parseFloat(row.prec_vta) || 0
     row.reng_neto = quantity * price
 }
@@ -124,17 +127,17 @@ const removeRow = (index) => {
     form.rows.splice(index, 1)
 }
 
-// Totales calculados
-const totals = computed(() => {
-    const subtotal = form.rows.reduce((sum, row) => {
-        const lineTotal = parseFloat(row.reng_neto) || 0
-        return sum + lineTotal
-    }, 0)
-    const iva = subtotal * 0.16
-    const total = subtotal + iva
+// Totales calculados (comentado porque está comentado en el template)
+// const totals = computed(() => {
+//     const subtotal = form.rows.reduce((sum, row) => {
+//         const lineTotal = parseFloat(row.reng_neto) || 0
+//         return sum + lineTotal
+//     }, 0)
+//     const iva = subtotal * 0.16
+//     const total = subtotal + iva
 
-    return { subtotal, iva, total }
-})
+//     return { subtotal, iva, total }
+// })
 
 const formatCurrency = (amount) => {
     // Verificar que amount es un número válido
@@ -383,14 +386,9 @@ const submit = () => {
                                                 />
                                             </td>
                                             <td class="px-6 py-4">
-                                                <Input
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.01"
-                                                    v-model.number="row.prec_vta"
-                                                    class="w-32 bg-gray-100 cursor-not-allowed"
-                                                    readonly
-                                                />
+                                                <div class="w-32 px-3 py-2 text-sm bg-gray-100 border border-gray-300 rounded-md">
+                                                    {{ Number(row.prec_vta).toFixed(2) }}
+                                                </div>
                                             </td>
                                             <td class="px-6 py-4">
                                                 <Input

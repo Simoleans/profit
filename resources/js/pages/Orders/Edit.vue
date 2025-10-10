@@ -40,8 +40,8 @@ const form = useForm({
     rows: props.order.rows.map(row => ({
         co_art: row.co_art,
         art_des: row.article.art_des,
-        total_art: row.total_art,
-        prec_vta: row.prec_vta,
+        total_art: Math.floor(row.total_art), // Asegurar que sea entero
+        prec_vta: row.prec_vta, // Ya viene con 2 decimales del modelo
         uni_venta: row.uni_venta,
         reng_neto: row.reng_neto
     }))
@@ -103,15 +103,16 @@ const selectClient = (client) => {
 const addArticle = (article) => {
     const existingIndex = form.rows.findIndex(row => row.co_art === article.co_art)
 
-    // Determinar cantidad por defecto: usar venta_minima si es > 0, sino 1
-    const defaultQuantity = (article.venta_minima && article.venta_minima > 0) ? article.venta_minima : 1
+    // venta_minima ya viene como entero desde el modelo
+    const defaultQuantity = article.venta_minima || 1
 
     if (existingIndex >= 0) {
         // Si ya existe, incrementar cantidad con venta_minima
-        form.rows[existingIndex].total_art += defaultQuantity
+        form.rows[existingIndex].total_art = Math.floor(form.rows[existingIndex].total_art) + defaultQuantity
         calculateRowTotal(existingIndex)
     } else {
         // Agregar nuevo al inicio de la lista
+        // prec_vta1 ya viene con 2 decimales desde el modelo
         form.rows.unshift({
             co_art: article.co_art,
             art_des: article.art_des,
@@ -129,7 +130,9 @@ const addArticle = (article) => {
 // Calcular total de línea
 const calculateRowTotal = (index) => {
     const row = form.rows[index]
-    const quantity = parseFloat(row.total_art) || 0
+    // Asegurar que cantidad sea entero
+    row.total_art = Math.floor(parseFloat(row.total_art) || 1)
+    const quantity = row.total_art
     const price = parseFloat(row.prec_vta) || 0
     row.reng_neto = quantity * price
 }
@@ -398,14 +401,9 @@ const submit = () => {
                                                 />
                                             </td>
                                             <td class="px-6 py-4">
-                                                <Input
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.01"
-                                                    v-model.number="row.prec_vta"
-                                                    class="w-32 bg-gray-100 cursor-not-allowed"
-                                                    readonly
-                                                />
+                                                <div class="w-32 px-3 py-2 text-sm bg-gray-100 border border-gray-300 rounded-md">
+                                                    {{ Number(row.prec_vta).toFixed(2) }}
+                                                </div>
                                             </td>
                                             <td class="px-6 py-4">
                                                 <Input

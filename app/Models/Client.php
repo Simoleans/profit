@@ -43,6 +43,18 @@ class Client extends Model
         return $query->where('status', 1);
     }
 
+    // Accessor para co_cli sin espacios
+    public function getCoCliAttribute($value)
+    {
+        return trim($value);
+    }
+
+    // Relación con los medios usando co_cli como clave
+    public function media()
+    {
+        return $this->morphMany(Media::class, 'mediable', 'mediable_type', 'mediable_id', 'co_cli');
+    }
+
     //querys
     public function scopeClientWithUser($query, $search)
     {

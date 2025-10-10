@@ -114,6 +114,19 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'factura' => [
+            'driver' => 'sqlsrv',
+            'host' => env('SQLSRV_FACT_HOST', 'localhost'),
+            'port' => env('SQLSRV_FACT_PORT', '1433'),
+            'database' => env('SQLSRV_FACT_DATABASE', 'forge'),
+            'username' => env('SQLSRV_FACT_USERNAME', 'forge'),
+            'password' => env('SQLSRV_FACT_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => false,
+        ],
+
     ],
 
     /*

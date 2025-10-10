@@ -8,6 +8,7 @@ class ClientTemp extends Model
 {
     protected $connection = 'sqlsrv';
     protected $table = 'clientes_temp';
+    protected $primaryKey = 'rif'; // Definir rif como primary key
     public $timestamps = false;
     public $incrementing = false;
     protected $keyType = 'string';
@@ -32,11 +33,23 @@ class ClientTemp extends Model
         return $this->belongsTo(User::class, 'co_ven', 'co_ven');
     }
 
+    // Accessor para RIF sin espacios
+    public function getRifAttribute($value)
+    {
+        return trim($value);
+    }
+
+    // Relación con los medios usando rif como clave
+    public function media()
+    {
+        return $this->morphMany(Media::class, 'mediable', 'mediable_type', 'mediable_id', 'rif');
+    }
+
     // Scope para clientes temporales de usuarios normales
     public function scopeClientTempWithUser($query, $search)
     {
         $user = \Illuminate\Support\Facades\Auth::user();
-        $clients = ClientTemp::query()
+        $clients = ClientTemp::with('media')
             ->where('co_ven', $user->co_ven)
             ->when($search, function ($query, $search) {
                 return $query->where('cli_des', 'like', "%{$search}%")
@@ -53,7 +66,7 @@ class ClientTemp extends Model
     public function scopeClientTempWithAdmin($query, $search)
     {
         $user = \Illuminate\Support\Facades\Auth::user();
-        $clients = ClientTemp::query()
+        $clients = ClientTemp::with('media')
             ->when($search, function ($query, $search) {
                 return $query->where('cli_des', 'like', "%{$search}%")
                            ->orWhere('co_cli', 'like', "%{$search}%");

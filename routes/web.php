@@ -7,6 +7,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\HeaderController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Api\DashboardStatsController;
 
 Route::get('/', function () {
     //return Inertia::render('Welcome');
@@ -15,9 +16,20 @@ Route::get('/', function () {
 
 Route::get('dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
 
+// API routes para estadísticas del dashboard
+Route::prefix('api/dashboard')->middleware(['auth'])->group(function () {
+    Route::get('stats/clients', [DashboardStatsController::class, 'clients'])->name('api.dashboard.stats.clients');
+    Route::get('stats/retenciones', [DashboardStatsController::class, 'retenciones'])->name('api.dashboard.stats.retenciones');
+    Route::get('stats/cuentas-por-cobrar', [DashboardStatsController::class, 'cuentasPorCobrar'])->name('api.dashboard.stats.cuentas-por-cobrar');
+    Route::get('promotion-articles', [DashboardStatsController::class, 'promotionArticles'])->name('api.dashboard.promotion-articles');
+    Route::get('order-stats', [DashboardStatsController::class, 'orderStats'])->name('api.dashboard.order-stats');
+});
+
 Route::resource('users', UserController::class)->middleware(['auth'])->names('users');
 Route::get('search-seller', [UserController::class, 'searchSeller'])->middleware(['auth'])->name('search.seller');
 
+// Ruta para descargar documentos (debe ir antes del resource)
+Route::get('clients/media/{mediaId}/download', [ClientController::class, 'downloadDocument'])->middleware(['auth'])->name('clients.media.download');
 Route::resource('clients', ClientController::class)->middleware(['auth'])->names('clients');
 
 Route::resource('articles', ArticleController::class)->middleware(['auth'])->names('articles');

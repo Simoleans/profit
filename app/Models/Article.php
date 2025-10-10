@@ -40,6 +40,21 @@ class Article extends Model
         'venta_minima'
     ];
 
+    /**
+     * Accessor para prec_vta1 - retorna con 2 decimales
+     */
+    public function getPrecVta1Attribute($value)
+    {
+        return round((float)$value, 2);
+    }
+
+    /**
+     * Accessor para venta_minima - retorna como entero
+     */
+    public function getVentaMinimaAttribute($value)
+    {
+        return (int)floor($value > 0 ? $value : 1);
+    }
 
     public function category()
     {
