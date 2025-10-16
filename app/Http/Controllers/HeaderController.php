@@ -264,9 +264,9 @@ class HeaderController extends Controller
             ->where('co_ven', Auth::user()->co_ven)
             ->firstOrFail();
 
-        // Ya no necesitamos verificar permisos porque filtramos por vendedor
 
-        $header->load(['client', 'rows.article']); // Quitar seller
+        $header->load(['client', 'rows.article']);
+
 
         // Cargar vendedor manualmente desde MySQL
         $seller = User::where('co_ven', $header->co_ven)->first();
@@ -297,7 +297,7 @@ class HeaderController extends Controller
             return back()->withErrors(['error' => 'Solo se pueden editar pedidos pendientes']);
         }
 
-        $header->load(['client', 'rows.article']); // Quitar seller
+        $header->load(['client', 'rows.article']);
 
         // Cargar vendedor manualmente desde MySQL
         $seller = User::where('co_ven', $header->co_ven)->first();
@@ -551,6 +551,58 @@ class HeaderController extends Controller
     }
 
     /**
+     * Reenviar correo de notificación al cliente
+     */
+    public function resendEmail($fact_num)
+    {
+        // Buscar el pedido directamente por fact_num y vendedor
+        $header = Header::where('fact_num', $fact_num)
+            ->where('co_ven', Auth::user()->co_ven)
+            ->firstOrFail();
+
+        try {
+            // Cargar relaciones necesarias
+            $header->load(['rows.article', 'client']);
+
+            // Verificar que el cliente existe
+            if (!$header->client) {
+                return back()->withErrors(['error' => 'No se encontró el cliente asociado a este pedido']);
+            }
+
+            // Verificar que el cliente tiene email
+            $clientEmail = trim($header->client->email ?? '');
+
+            if (empty($clientEmail)) {
+                return back()->withErrors(['error' => 'El cliente no tiene un email configurado']);
+            }
+
+            if (!filter_var($clientEmail, FILTER_VALIDATE_EMAIL)) {
+                return back()->withErrors(['error' => 'El email del cliente no es válido']);
+            }
+
+            // Determinar el tipo de correo según el estado
+            $emailType = $header->status === 'A' ? 'A' : 'P';
+
+            // Enviar el correo
+            Mail::to($clientEmail)->send(new OrderNotificationMail(
+                $header,
+                $clientEmail,
+                $header->client->cli_des,
+                $emailType
+            ));
+
+            Log::info("Correo reenviado exitosamente al cliente {$header->client->cli_des} ({$clientEmail}) para la orden #{$header->fact_num}");
+
+            return redirect()->route('orders.show', $fact_num)
+                ->with('success', "Correo reenviado exitosamente a {$clientEmail}");
+
+        } catch (\Exception $e) {
+            Log::error("Error al reenviar correo para la orden #{$header->fact_num}: " . $e->getMessage());
+            return back()->withErrors(['error' => 'Error al enviar el correo: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
      * Enviar correo de aprobación al cliente
      */
     private function sendApprovalEmail(Header $order)
@@ -571,7 +623,6 @@ class HeaderController extends Controller
                 return;
             }
 
-            // Validar formato básico del email
             if (!filter_var($clientEmail, FILTER_VALIDATE_EMAIL)) {
                 Log::warning("Email inválido para cliente {$order->client->cli_des}: {$clientEmail}");
                 return;
@@ -598,19 +649,16 @@ class HeaderController extends Controller
     private function sendOrderNotificationEmail(Header $order)
     {
         try {
-            // Debug: Verificar que el fact_num existe
+
             Log::info("Enviando correo para orden #{$order->fact_num} con co_cli: {$order->co_cli}");
 
-            // Cargar las relaciones necesarias para el correo
             $order->load(['rows.article', 'client']);
 
-            // Verificar que el cliente existe
             if (!$order->client) {
                 Log::warning("No se encontró el cliente para la orden #{$order->fact_num} (co_cli: {$order->co_cli})");
                 return;
             }
 
-            // Obtener el email del cliente y hacer trim
             $clientEmail = trim($order->client->email ?? '');
 
             if (empty($clientEmail)) {
@@ -638,7 +686,7 @@ class HeaderController extends Controller
 
         } catch (\Exception $e) {
             Log::error("Error al enviar correo de notificación para la orden #{$order->fact_num}: " . $e->getMessage());
-            // No lanzar la excepción para que no afecte la creación de la orden
+
         }
     }
 }

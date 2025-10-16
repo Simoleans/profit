@@ -10,16 +10,19 @@ use App\Models\Header;
 use Illuminate\Support\Facades\Auth;
 use App\Services\FacturaService;
 use App\Services\CuentasXCobrarService;
+use App\Services\ClienteService;
 
 class DashboardStatsController extends Controller
 {
     protected $facturaService;
     protected $cuentasXCobrarService;
+    protected $clienteService;
 
-    public function __construct(FacturaService $facturaService, CuentasXCobrarService $cuentasXCobrarService)
+    public function __construct(FacturaService $facturaService, CuentasXCobrarService $cuentasXCobrarService, ClienteService $clienteService)
     {
         $this->facturaService = $facturaService;
         $this->cuentasXCobrarService = $cuentasXCobrarService;
+        $this->clienteService = $clienteService;
     }
 
     /**
@@ -139,6 +142,27 @@ class DashboardStatsController extends Controller
             'stats' => $organized,
             'month' => now()->format('F Y'),
             'codigo_vendedor' => $user->co_ven
+        ]);
+    }
+
+    /**
+     * Obtener clientes sin pedidos
+     */
+    public function clientesSinPedidos()
+    {
+        $user = Auth::user();
+
+        // Si es administrador, traer todos los clientes sin pedidos
+        // Si es vendedor, solo los suyos
+        $vendedor = $user->rol == 0 ? $user->co_ven : null;
+
+        $clientes = $this->clienteService->obtenerClientesSinPedidos($vendedor);
+
+        return response()->json([
+            'clientes' => $clientes,
+            'total' => $clientes->count(),
+            'codigo_vendedor' => $user->co_ven,
+            'is_admin' => $user->rol != 0
         ]);
     }
 }

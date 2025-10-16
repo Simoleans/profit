@@ -6,10 +6,10 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import ClientStatsCard from '../components/ClientStatsCard.vue';
 import RetencionesStatsCard from '../components/RetencionesStatsCard.vue';
-import CuentasXCobrarStatsCard from '../components/CuentasXCobrarStatsCard.vue';
+import ClientesSinPedidosStatsCard from '../components/ClientesSinPedidosStatsCard.vue';
 import StatsCardSkeleton from '../components/StatsCardSkeleton.vue';
 import PromotionArticlesList from '../components/PromotionArticlesList.vue';
-import OrderStatusStats from '../components/OrderStatusStats.vue';
+// import OrderStatusStats from '../components/OrderStatusStats.vue';
 import axios from 'axios';
 
 interface ClientStats {
@@ -41,21 +41,37 @@ interface Article {
     };
 }
 
-interface StatusStat {
-    total: number;
-    monto: number;
-    label: string;
+// interface StatusStat {
+//     total: number;
+//     monto: number;
+//     label: string;
+// }
+
+// interface OrderStatsData {
+//     stats: {
+//         P: StatusStat;
+//         A: StatusStat;
+//         R: StatusStat;
+//         F: StatusStat;
+//     };
+//     month: string;
+//     codigo_vendedor: string;
+// }
+
+interface ClienteSinPedido {
+    co_cli: string;
+    cli_des: string;
+    fecha_reg: string;
+    co_ven: string;
+    ven_des: string;
+    zon_des: string;
 }
 
-interface OrderStatsData {
-    stats: {
-        P: StatusStat;
-        A: StatusStat;
-        R: StatusStat;
-        F: StatusStat;
-    };
-    month: string;
+interface ClientesSinPedidosData {
+    clientes: ClienteSinPedido[];
+    total: number;
     codigo_vendedor: string;
+    is_admin: boolean;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -69,13 +85,15 @@ const clientsStats = ref<ClientStats | null>(null);
 const retencionesStats = ref<RetencionesStats | null>(null);
 const cuentasPorCobrarStats = ref<CuentasXCobrarStats | null>(null);
 const promotionArticles = ref<Article[]>([]);
-const orderStats = ref<OrderStatsData | null>(null);
+// const orderStats = ref<OrderStatsData | null>(null);
+const clientesSinPedidos = ref<ClientesSinPedidosData | null>(null);
 
 const loadingClients = ref(true);
 const loadingRetenciones = ref(true);
 const loadingCuentasPorCobrar = ref(true);
 const loadingPromotionArticles = ref(true);
-const loadingOrderStats = ref(true);
+// const loadingOrderStats = ref(true);
+const loadingClientesSinPedidos = ref(true);
 
 // Función para cargar estadísticas de clientes
 const loadClientsStats = async () => {
@@ -124,7 +142,7 @@ const loadPromotionArticles = async () => {
 };
 
 // Función para cargar estadísticas de pedidos
-const loadOrderStats = async () => {
+/* const loadOrderStats = async () => {
     try {
         const response = await axios.get('/api/dashboard/order-stats');
         orderStats.value = response.data;
@@ -132,6 +150,18 @@ const loadOrderStats = async () => {
         console.error('Error cargando estadísticas de pedidos:', error);
     } finally {
         loadingOrderStats.value = false;
+    }
+}; */
+
+// Función para cargar clientes sin pedidos
+const loadClientesSinPedidos = async () => {
+    try {
+        const response = await axios.get('/api/dashboard/clientes-sin-pedidos');
+        clientesSinPedidos.value = response.data;
+    } catch (error) {
+        console.error('Error cargando clientes sin pedidos:', error);
+    } finally {
+        loadingClientesSinPedidos.value = false;
     }
 };
 
@@ -142,7 +172,8 @@ const loadAllStats = async () => {
     await loadRetencionesStats();
     await loadCuentasPorCobrarStats();
     await loadPromotionArticles();
-    await loadOrderStats();
+    // await loadOrderStats();
+    await loadClientesSinPedidos();
 };
 
 // Cargar todas las estadísticas al montar el componente
@@ -165,34 +196,31 @@ onMounted(() => {
                 <StatsCardSkeleton v-if="loadingRetenciones" />
                 <RetencionesStatsCard v-else-if="retencionesStats" :stats="retencionesStats" />
 
-                <!-- Tarjeta de estadísticas de cuentas por cobrar -->
-                <StatsCardSkeleton v-if="loadingCuentasPorCobrar" />
-                <CuentasXCobrarStatsCard v-else-if="cuentasPorCobrarStats" :stats="cuentasPorCobrarStats" />
+                <!-- Tarjeta de clientes sin pedidos -->
+                <StatsCardSkeleton v-if="loadingClientesSinPedidos" />
+                <ClientesSinPedidosStatsCard
+                    v-else-if="clientesSinPedidos"
+                    :total="clientesSinPedidos.total"
+                    :codigo_vendedor="clientesSinPedidos.codigo_vendedor"
+                />
             </div>
-            <!-- Sección inferior: Promociones y Estadísticas de Pedidos -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4">
                 <!-- Artículos en Promoción -->
                 <PromotionArticlesList
                     :articles="promotionArticles"
                     :loading="loadingPromotionArticles"
                 />
+            </div>
 
-                <!-- Estadísticas de Pedidos por Status -->
+            <!-- Estadísticas de Pedidos por Status - COMENTADO -->
+            <!-- <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <OrderStatusStats
                     v-if="orderStats"
                     :stats="orderStats.stats"
                     :month="orderStats.month"
                     :loading="loadingOrderStats"
                 />
-                <div v-else class="overflow-hidden rounded-xl border border-sidebar-border/70 bg-white dark:bg-gray-800">
-                    <div class="p-6">
-                        <div class="animate-pulse space-y-3">
-                            <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-1/2"></div>
-                            <div class="h-8 bg-gray-200 dark:bg-gray-600 rounded"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </div> -->
         </div>
     </AppLayout>
 </template>

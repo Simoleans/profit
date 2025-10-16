@@ -12,31 +12,57 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\UpdateClientRequest;
+use App\Services\CuentasXCobrarService;
 
 class ClientController extends Controller
 {
     /**
      * Display a listing of clients for the authenticated user.
      */
-    public function index(Request $request)
+    public function index(Request $request, CuentasXCobrarService $cuentasXCobrarService)
     {
         $search = $request->get('search', '');
-        $tab = $request->get('tab', 'processed'); // 'processed' o 'temp'
+        $tab = $request->get('tab', 'processed'); // 'processed', 'temp' o 'balance'
+        $user = Auth::user();
 
-        if(Auth::user()->rol == 0){
-            if($tab === 'temp') {
-                $clients = ClientTemp::clientTempWithUser($search);
-            } else {
-                $clients = Client::clientProcessedWithUser($search);
+        // Tab de clientes con saldo
+        if($tab === 'balance') {
+            $clientsData = $cuentasXCobrarService->obtenerCuentasXCobrarResumido(null, $user->co_ven);
+
+            // Convertir a colección y aplicar filtro de búsqueda si existe
+            if ($search) {
+                $clientsData = $clientsData->filter(function ($client) use ($search) {
+                    return stripos($client->co_cli, $search) !== false ||
+                           stripos($client->cli_des, $search) !== false;
+                });
             }
-        }else{ //es admin
-            if($tab === 'temp') {
-                $clients = ClientTemp::clientTempWithAdmin($search);
-            } else {
-                $clients = Client::clientProcessedWithAdmin($search);
+
+            // Simular estructura de paginación para mantener compatibilidad con la vista
+            $clients = [
+                'data' => $clientsData->values(),
+                'total' => $clientsData->count(),
+                'last_page' => 1,
+                'from' => $clientsData->count() > 0 ? 1 : 0,
+                'to' => $clientsData->count(),
+                'links' => []
+            ];
+        }
+        // Tabs de clientes procesados y temporales
+        else {
+            if($user->rol == 0){
+                if($tab === 'temp') {
+                    $clients = ClientTemp::clientTempWithUser($search);
+                } else {
+                    $clients = Client::clientProcessedWithUser($search);
+                }
+            }else{ //es admin
+                if($tab === 'temp') {
+                    $clients = ClientTemp::clientTempWithAdmin($search);
+                } else {
+                    $clients = Client::clientProcessedWithAdmin($search);
+                }
             }
         }
-
 
         return Inertia::render('Clients/Index', [
             'clients' => $clients,
@@ -181,6 +207,31 @@ class ClientController extends Controller
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Error al actualizar el cliente: ' . $e->getMessage()])->withInput();
         }
+    }
+
+    /**
+     * Mostrar el detalle de cuentas por cobrar de un cliente específico
+     */
+    public function balanceDetail(string $co_cli, CuentasXCobrarService $cuentasXCobrarService)
+    {
+        $user = Auth::user();
+
+        // Obtener el detalle de cuentas por cobrar para el cliente específico
+        $balanceDetail = $cuentasXCobrarService->obtenerCuentasXCobrarDetallado($co_cli, $user->co_ven);
+
+        // Obtener información del cliente (primer registro para obtener datos del cliente)
+        $clientInfo = null;
+        if ($balanceDetail->isNotEmpty()) {
+            $clientInfo = [
+                'co_cli' => $balanceDetail->first()->co_cli,
+                'cli_des' => $balanceDetail->first()->cli_Des
+            ];
+        }
+
+        return Inertia::render('Clients/BalanceDetail', [
+            'client' => $clientInfo,
+            'balanceDetail' => $balanceDetail,
+        ]);
     }
 
     /**

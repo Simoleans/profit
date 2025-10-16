@@ -14,7 +14,6 @@ class FacturaService
      */
     public function obtenerTotalFacturas($codigoVendedor)
     {
-        // Ejecuta la consulta para obtener el total
         $result = DB::connection('factura')
                     ->selectOne("
                         select COUNT(FAC.fact_num) as cuantas

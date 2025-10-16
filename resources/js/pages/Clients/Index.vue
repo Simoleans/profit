@@ -40,7 +40,7 @@ const performSearch = () => {
 };
 
 // Función para cambiar de tab
-const changeTab = (tab) => {
+const changeTab = (tab: string) => {
     currentTab.value = tab;
     router.get('/clients', {
         search: searchQuery.value,
@@ -52,7 +52,7 @@ const changeTab = (tab) => {
 };
 
 // Watch para búsqueda en tiempo real (con debounce)
-let searchTimeout = null;
+let searchTimeout: NodeJS.Timeout | null = null;
 watch(searchQuery, () => {
     if (searchTimeout) clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
@@ -61,7 +61,7 @@ watch(searchQuery, () => {
 });
 
 // Función para ir a una página específica
-const goToPage = (url) => {
+const goToPage = (url: string) => {
     if (url) {
         router.visit(url);
     }
@@ -119,6 +119,20 @@ const goToPage = (url) => {
                                 {{ clients.total }}
                             </span>
                         </button>
+                        <button
+                            @click="changeTab('balance')"
+                            :class="[
+                                'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium',
+                                currentTab === 'balance'
+                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                            ]"
+                        >
+                            Clientes con Saldo
+                            <span v-if="currentTab === 'balance'" class="ml-2 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-600 dark:bg-blue-900 dark:text-blue-400">
+                                {{ clients.total }}
+                            </span>
+                        </button>
                     </nav>
                 </div>
 
@@ -128,10 +142,10 @@ const goToPage = (url) => {
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
-                                {{ currentTab === 'processed' ? 'Clientes Procesados' : 'Clientes Temporales' }}
+                                {{ currentTab === 'processed' ? 'Clientes Procesados' : currentTab === 'temp' ? 'Clientes Temporales' : 'Clientes con Saldo' }}
                             </h3>
                             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                {{ clients.total }} cliente{{ clients.total !== 1 ? 's' : '' }} {{ currentTab === 'processed' ? 'procesado' : 'temporal' }}{{ clients.total !== 1 ? 's' : '' }}
+                                {{ clients.total }} cliente{{ clients.total !== 1 ? 's' : '' }} {{ currentTab === 'processed' ? 'procesado' : currentTab === 'temp' ? 'temporal' : 'con saldo' }}{{ clients.total !== 1 ? 's' : '' }}
                             </p>
                         </div>
 
@@ -157,7 +171,8 @@ const goToPage = (url) => {
                 <!-- Tabla responsive -->
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-gray-700">
+                        <!-- Header para tabs processed y temp -->
+                        <thead v-if="currentTab !== 'balance'" class="bg-gray-50 dark:bg-gray-700">
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                     Código
@@ -176,7 +191,25 @@ const goToPage = (url) => {
                                 </th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
+                        <!-- Header para tab balance -->
+                        <thead v-else class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    Código
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    Nombre
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    Saldo
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    Acciones
+                                </th>
+                            </tr>
+                        </thead>
+                        <!-- Tbody para tabs processed y temp -->
+                        <tbody v-if="currentTab !== 'balance'" class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
                             <!-- Estado vacío -->
                             <tr v-if="clients.data.length === 0">
                                 <td colspan="5" class="px-6 py-12 text-center">
@@ -221,6 +254,49 @@ const goToPage = (url) => {
                                         <ShowClient :client="client" :tab="currentTab" />
                                         <!-- <EditClient :client="client" /> -->
                                         <DeleteClient :client="client" />
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <!-- Tbody para tab balance -->
+                        <tbody v-else class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
+                            <!-- Estado vacío -->
+                            <tr v-if="clients.data.length === 0">
+                                <td colspan="4" class="px-6 py-12 text-center">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                        <span class="text-gray-500 dark:text-gray-400">
+                                            {{ searchQuery ? 'No se encontraron clientes con ese criterio' : 'No hay clientes con saldo' }}
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Filas de clientes con saldo -->
+                            <tr v-for="client in clients.data" :key="client.co_cli" class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td class="whitespace-nowrap px-6 py-4 text-sm font-mono text-gray-900 dark:text-white">
+                                    {{ client.co_cli }}
+                                </td>
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                    {{ client.cli_des }}
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                    {{ client.saldo ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(client.saldo) : '$0.00' }}
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button
+                                            @click="router.visit(`/clients/balance-detail/${client.co_cli}`)"
+                                            class="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
+                                            title="Ver detalle de cuentas por cobrar"
+                                        >
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>

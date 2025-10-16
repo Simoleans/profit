@@ -40,8 +40,17 @@ class Header extends Model
 
     protected $dateFormat = 'Y-m-d\TH:i:s'; // ISO con T (no ambiguo)
 
+    // Accessor para co_cli sin espacios (igual que en Client)
+    public function getCoCliAttribute($value)
+    {
+        return trim($value);
+    }
 
-
+    // Accessor para co_ven sin espacios
+    public function getCoVenAttribute($value)
+    {
+        return trim($value);
+    }
 
     // Relación con renglones
     public function rows()
@@ -54,6 +63,7 @@ class Header extends Model
     {
         return $this->belongsTo(Client::class, 'co_cli', 'co_cli');
     }
+
 
     // Relación con vendedor (conexión cruzada MySQL)
     public function seller()

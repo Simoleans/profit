@@ -207,8 +207,8 @@ const deleteOrder = (order) => {
                                 </td>
                                 <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
                                     <div class="flex flex-col">
-                                        <span>{{ order.client.cli_des }}</span>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ order.client.rif }}</span>
+                                        <span>{{ order.client?.cli_des }}</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ order.client?.rif }}</span>
                                         <!-- En móvil, mostrar información adicional debajo del cliente -->
                                         <div class="mt-1 sm:hidden">
                                             <span class="text-xs text-gray-500 dark:text-gray-400">

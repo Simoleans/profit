@@ -23,6 +23,7 @@ Route::prefix('api/dashboard')->middleware(['auth'])->group(function () {
     Route::get('stats/cuentas-por-cobrar', [DashboardStatsController::class, 'cuentasPorCobrar'])->name('api.dashboard.stats.cuentas-por-cobrar');
     Route::get('promotion-articles', [DashboardStatsController::class, 'promotionArticles'])->name('api.dashboard.promotion-articles');
     Route::get('order-stats', [DashboardStatsController::class, 'orderStats'])->name('api.dashboard.order-stats');
+    Route::get('clientes-sin-pedidos', [DashboardStatsController::class, 'clientesSinPedidos'])->name('api.dashboard.clientes-sin-pedidos');
 });
 
 Route::resource('users', UserController::class)->middleware(['auth'])->names('users');
@@ -30,6 +31,8 @@ Route::get('search-seller', [UserController::class, 'searchSeller'])->middleware
 
 // Ruta para descargar documentos (debe ir antes del resource)
 Route::get('clients/media/{mediaId}/download', [ClientController::class, 'downloadDocument'])->middleware(['auth'])->name('clients.media.download');
+Route::get('clients/balance-detail/{co_cli}', [ClientController::class, 'balanceDetail'])->middleware(['auth'])->name('clients.balance-detail');
+Route::get('clientes-sin-pedidos', [\App\Http\Controllers\ClientesSinPedidosController::class, 'index'])->middleware(['auth'])->name('clientes-sin-pedidos');
 Route::resource('clients', ClientController::class)->middleware(['auth'])->names('clients');
 
 Route::resource('articles', ArticleController::class)->middleware(['auth'])->names('articles');
@@ -43,6 +46,7 @@ Route::get('orders/{fact_num}/edit', [HeaderController::class, 'edit'])->middlew
 Route::put('orders/{fact_num}', [HeaderController::class, 'update'])->middleware(['auth'])->name('orders.update');
 Route::delete('orders/{fact_num}', [HeaderController::class, 'destroy'])->middleware(['auth'])->name('orders.destroy');
 Route::post('orders/{fact_num}/approve', [HeaderController::class, 'approve'])->middleware(['auth'])->name('orders.approve');
+Route::post('orders/{fact_num}/resend-email', [HeaderController::class, 'resendEmail'])->middleware(['auth'])->name('orders.resend-email');
 Route::get('search-clients', [HeaderController::class, 'searchClients'])->middleware(['auth'])->name('search.clients');
 Route::get('search-articles', [HeaderController::class, 'searchArticles'])->middleware(['auth'])->name('search.articles');
 Route::get('check-client', [HeaderController::class, 'checkClient'])->middleware(['auth'])->name('check.client');
