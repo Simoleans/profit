@@ -6,10 +6,10 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import ClientStatsCard from '../components/ClientStatsCard.vue';
 import RetencionesStatsCard from '../components/RetencionesStatsCard.vue';
-import ClientesSinPedidosStatsCard from '../components/ClientesSinPedidosStatsCard.vue';
+import CuentasXCobrarStatsCard from '../components/CuentasXCobrarStatsCard.vue';
 import StatsCardSkeleton from '../components/StatsCardSkeleton.vue';
 import PromotionArticlesList from '../components/PromotionArticlesList.vue';
-// import OrderStatusStats from '../components/OrderStatusStats.vue';
+import ClientesInactivosList from '../components/ClientesInactivosList.vue';
 import axios from 'axios';
 
 interface ClientStats {
@@ -25,9 +25,13 @@ interface RetencionesStats {
 
 interface CuentasXCobrarStats {
     vencidas: number;
+    saldo_vencido: number;
     por_vencer: number;
+    saldo_por_vencer: number;
     total: number;
+    saldo_total: number;
     codigo_vendedor: string;
+    is_admin: boolean;
 }
 
 interface Article {
@@ -41,38 +45,14 @@ interface Article {
     };
 }
 
-// interface StatusStat {
-//     total: number;
-//     monto: number;
-//     label: string;
-// }
-
-// interface OrderStatsData {
-//     stats: {
-//         P: StatusStat;
-//         A: StatusStat;
-//         R: StatusStat;
-//         F: StatusStat;
-//     };
-//     month: string;
-//     codigo_vendedor: string;
-// }
-
-interface ClienteSinPedido {
+interface ClienteInactivo {
     co_cli: string;
     cli_des: string;
-    fecha_reg: string;
-    co_ven: string;
-    ven_des: string;
-    zon_des: string;
+    ult_fec_fac: string;
+    meses_ult_fac: number;
+    prom_vta_mens: number;
 }
 
-interface ClientesSinPedidosData {
-    clientes: ClienteSinPedido[];
-    total: number;
-    codigo_vendedor: string;
-    is_admin: boolean;
-}
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -85,15 +65,17 @@ const clientsStats = ref<ClientStats | null>(null);
 const retencionesStats = ref<RetencionesStats | null>(null);
 const cuentasPorCobrarStats = ref<CuentasXCobrarStats | null>(null);
 const promotionArticles = ref<Article[]>([]);
+const clientesInactivos = ref<ClienteInactivo[]>([]);
 // const orderStats = ref<OrderStatsData | null>(null);
-const clientesSinPedidos = ref<ClientesSinPedidosData | null>(null);
+// const clientesSinPedidos = ref<ClientesSinPedidosData | null>(null);
 
 const loadingClients = ref(true);
 const loadingRetenciones = ref(true);
 const loadingCuentasPorCobrar = ref(true);
 const loadingPromotionArticles = ref(true);
+const loadingClientesInactivos = ref(true);
 // const loadingOrderStats = ref(true);
-const loadingClientesSinPedidos = ref(true);
+// const loadingClientesSinPedidos = ref(true);
 
 // Función para cargar estadísticas de clientes
 const loadClientsStats = async () => {
@@ -141,29 +123,19 @@ const loadPromotionArticles = async () => {
     }
 };
 
-// Función para cargar estadísticas de pedidos
-/* const loadOrderStats = async () => {
+// Función para cargar clientes inactivos
+const loadClientesInactivos = async () => {
     try {
-        const response = await axios.get('/api/dashboard/order-stats');
-        orderStats.value = response.data;
+        const response = await axios.get('/api/dashboard/clientes-inactivos');
+        clientesInactivos.value = response.data.clientes;
     } catch (error) {
-        console.error('Error cargando estadísticas de pedidos:', error);
+        console.error('Error cargando clientes inactivos:', error);
     } finally {
-        loadingOrderStats.value = false;
-    }
-}; */
-
-// Función para cargar clientes sin pedidos
-const loadClientesSinPedidos = async () => {
-    try {
-        const response = await axios.get('/api/dashboard/clientes-sin-pedidos');
-        clientesSinPedidos.value = response.data;
-    } catch (error) {
-        console.error('Error cargando clientes sin pedidos:', error);
-    } finally {
-        loadingClientesSinPedidos.value = false;
+        loadingClientesInactivos.value = false;
     }
 };
+
+
 
 // Cargar todas las estadísticas de forma secuencial
 const loadAllStats = async () => {
@@ -172,11 +144,10 @@ const loadAllStats = async () => {
     await loadRetencionesStats();
     await loadCuentasPorCobrarStats();
     await loadPromotionArticles();
-    // await loadOrderStats();
-    await loadClientesSinPedidos();
+    await loadClientesInactivos();
+
 };
 
-// Cargar todas las estadísticas al montar el componente
 onMounted(() => {
     loadAllStats();
 });
@@ -196,23 +167,37 @@ onMounted(() => {
                 <StatsCardSkeleton v-if="loadingRetenciones" />
                 <RetencionesStatsCard v-else-if="retencionesStats" :stats="retencionesStats" />
 
-                <!-- Tarjeta de clientes sin pedidos -->
-                <StatsCardSkeleton v-if="loadingClientesSinPedidos" />
-                <ClientesSinPedidosStatsCard
-                    v-else-if="clientesSinPedidos"
-                    :total="clientesSinPedidos.total"
-                    :codigo_vendedor="clientesSinPedidos.codigo_vendedor"
+                <!-- Tarjeta de Cuentas por Cobrar - Reemplaza a ClientesSinPedidos -->
+                <CuentasXCobrarStatsCard
+                    v-if="cuentasPorCobrarStats"
+                    :stats="cuentasPorCobrarStats"
+                    :loading="loadingCuentasPorCobrar"
                 />
             </div>
-            <div class="grid grid-cols-1 gap-4">
+
+            <!-- Tarjeta de clientes sin pedidos -->
+            <!-- <ClientesSinPedidosList
+                :clientes="clientesSinPedidos?.clientes || []"
+                :total="clientesSinPedidos?.total || 0"
+                :loading="loadingClientesSinPedidos"
+            /> -->
+
+            <!-- Grid de 2 columnas: Artículos en Promoción y Clientes Inactivos -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <!-- Artículos en Promoción -->
                 <PromotionArticlesList
                     :articles="promotionArticles"
                     :loading="loadingPromotionArticles"
                 />
+
+                <!-- Clientes Inactivos -->
+                <ClientesInactivosList
+                    :clientes="clientesInactivos"
+                    :loading="loadingClientesInactivos"
+                />
             </div>
 
-            <!-- Estadísticas de Pedidos por Status - COMENTADO -->
+            <!-- Estadísticas de Pedidos por Status -->
             <!-- <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <OrderStatusStats
                     v-if="orderStats"

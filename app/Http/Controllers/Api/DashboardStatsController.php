@@ -70,18 +70,31 @@ class DashboardStatsController extends Controller
 
     /**
      * Obtener estadísticas de cuentas por cobrar
+     * Usa 3 queries optimizadas para total, vencidas y por vencer
      */
     public function cuentasPorCobrar()
     {
         $user = Auth::user();
-        $facturasVencidas = $this->cuentasXCobrarService->obtenerFacturasVencidas($user->co_ven);
-        $facturasPorVencer = $this->cuentasXCobrarService->obtenerFacturasPorVencer($user->co_ven);
+        $vendedor = $user->rol == 0 ? $user->co_ven : null;
+
+        //  Resumen total
+        $resumenTotal = $this->cuentasXCobrarService->obtenerResumenTotal($vendedor);
+
+        // Resumen vencidas
+        $resumenVencidas = $this->cuentasXCobrarService->obtenerResumenVencidas($vendedor);
+
+        // Resumen por vencer
+        $resumenPorVencer = $this->cuentasXCobrarService->obtenerResumenPorVencer($vendedor);
 
         return response()->json([
-            'vencidas' => $facturasVencidas,
-            'por_vencer' => $facturasPorVencer,
-            'total' => $facturasVencidas + $facturasPorVencer,
-            'codigo_vendedor' => $user->co_ven
+            'total' => $resumenTotal['total'],
+            'saldo_total' => $resumenTotal['saldo'],
+            'vencidas' => $resumenVencidas['vencidas'],
+            'saldo_vencido' => $resumenVencidas['saldo_vencido'],
+            'por_vencer' => $resumenPorVencer['por_vencer'],
+            'saldo_por_vencer' => $resumenPorVencer['saldo_por_vencer'],
+            'codigo_vendedor' => $user->co_ven,
+            'is_admin' => $user->rol != 0
         ]);
     }
 
@@ -157,6 +170,27 @@ class DashboardStatsController extends Controller
         $vendedor = $user->rol == 0 ? $user->co_ven : null;
 
         $clientes = $this->clienteService->obtenerClientesSinPedidos($vendedor);
+
+        return response()->json([
+            'clientes' => $clientes,
+            'total' => $clientes->count(),
+            'codigo_vendedor' => $user->co_ven,
+            'is_admin' => $user->rol != 0
+        ]);
+    }
+
+    /**
+     * Obtener clientes inactivos (más de 3 meses sin comprar)
+     */
+    public function clientesInactivos()
+    {
+        $user = Auth::user();
+
+        // Si es administrador, traer todos los clientes inactivos
+        // Si es vendedor, solo los suyos
+        $vendedor = $user->rol == 0 ? $user->co_ven : null;
+
+        $clientes = $this->clienteService->obtenerClientesSinVentasPor3Meses($vendedor);
 
         return response()->json([
             'clientes' => $clientes,

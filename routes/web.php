@@ -24,6 +24,7 @@ Route::prefix('api/dashboard')->middleware(['auth'])->group(function () {
     Route::get('promotion-articles', [DashboardStatsController::class, 'promotionArticles'])->name('api.dashboard.promotion-articles');
     Route::get('order-stats', [DashboardStatsController::class, 'orderStats'])->name('api.dashboard.order-stats');
     Route::get('clientes-sin-pedidos', [DashboardStatsController::class, 'clientesSinPedidos'])->name('api.dashboard.clientes-sin-pedidos');
+    Route::get('clientes-inactivos', [DashboardStatsController::class, 'clientesInactivos'])->name('api.dashboard.clientes-inactivos');
 });
 
 Route::resource('users', UserController::class)->middleware(['auth'])->names('users');

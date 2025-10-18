@@ -37,7 +37,7 @@ const formatCurrency = (amount: number) => {
 
 // Función para calcular el total del saldo
 const totalSaldo = () => {
-    return props.balanceDetail.reduce((total: number, item: any) => total + (item.saldo || 0), 0);
+    return props.balanceDetail?.reduce((total: string, item: any) => parseFloat(total) + parseFloat(item.saldo || 0), 0);
 };
 </script>
 

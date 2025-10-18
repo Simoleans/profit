@@ -73,8 +73,8 @@ class CuentasXCobrarService
                                 ELSE -1
                             END * ROUND(dcc.saldo / dcc.tasa, 2)
                         ) > 0")
-            ->orderBy('cli.cli_des')
-            ->limit(10)
+            ->orderBy('saldo', 'desc')
+            ->limit(100)
             ->get();
     }
 
@@ -144,6 +144,125 @@ class CuentasXCobrarService
             ->orderBy('dcc.fec_emis')
             ->limit(1000)
             ->get();
+    }
+
+    /**
+     * Obtener resumen total de CxC (Query 1 optimizado)
+     * Retorna el conteo de facturas y el saldo total
+     *
+     * @param string|null $vendedor
+     * @return array
+     */
+    public function obtenerResumenTotal($vendedor = null)
+    {
+        $query = DB::connection('factura')
+            ->table('docum_cc as dcc')
+            ->select(
+                DB::raw('COUNT(IIF(dcc.tipo_doc = \'FACT\', 1, 0)) AS cuantas_facturas'),
+                DB::raw('SUM(
+                    IIF(dcc.tipo_doc IN (\'FACT\', \'AJPM\', \'AJPA\', \'N/DB\'), 1, -1)
+                    * ROUND(dcc.saldo / dcc.tasa, 2)
+                ) AS saldo')
+            )
+            ->whereRaw('ROUND(dcc.saldo / dcc.tasa, 2) > 0')
+            ->where('dcc.moneda', 'US$')
+            ->whereRaw('YEAR(dcc.fec_emis) >= 2024');
+
+        if ($vendedor) {
+            $query->where('dcc.co_ven', $vendedor);
+        }
+
+        $result = $query->first();
+
+        return [
+            'total' => (int) ($result->cuantas_facturas ?? 0),
+            'saldo' => (float) ($result->saldo ?? 0)
+        ];
+    }
+
+    /**
+     * Obtener resumen de CxC vencidas (Query 2 optimizado)
+     * Retorna el conteo de facturas vencidas y el saldo vencido
+     *
+     * @param string|null $vendedor
+     * @return array
+     */
+    public function obtenerResumenVencidas($vendedor = null)
+    {
+        $query = DB::connection('factura')
+            ->table('docum_cc as dcc')
+            ->select(
+                DB::raw('COUNT(IIF(dcc.tipo_doc = \'FACT\', 1, 0)) AS cuantas_facturas'),
+                DB::raw('SUM(
+                    IIF(dcc.tipo_doc IN (\'FACT\', \'AJPM\', \'AJPA\', \'N/DB\'), 1, -1)
+                    * ROUND(dcc.saldo / dcc.tasa, 2)
+                ) AS saldo')
+            )
+            ->whereRaw('ROUND(dcc.saldo / dcc.tasa, 2) > 0')
+            ->whereRaw("DATEADD(dd,
+                DATEDIFF(DD, dcc.fec_emis, dcc.fec_venc),
+                CONVERT(SMALLDATETIME, (
+                    IIF(dcc.tipo_doc = 'FACT',
+                        IIF(dcc.campo3 = '', CONVERT(CHAR(10), dcc.fec_venc, 103), TRY_CONVERT(CHAR(10), dcc.campo3, 103)),
+                        CONVERT(CHAR(10), dcc.fec_venc, 103))
+                ), 103)
+            ) < GETDATE()")
+            ->where('dcc.moneda', 'US$')
+            ->whereRaw('YEAR(dcc.fec_emis) >= 2024');
+
+        if ($vendedor) {
+            $query->where('dcc.co_ven', $vendedor);
+        }
+
+        $result = $query->first();
+
+        return [
+            'vencidas' => (int) ($result->cuantas_facturas ?? 0),
+            'saldo_vencido' => (float) ($result->saldo ?? 0)
+        ];
+    }
+
+    /**
+     * Obtener resumen de CxC por vencer (Query 3 optimizado)
+     * Retorna el conteo de facturas por vencer y el saldo por vencer
+     *
+     * @param string|null $vendedor
+     * @return array
+     */
+    public function obtenerResumenPorVencer($vendedor = null)
+    {
+        $query = DB::connection('factura')
+            ->table('docum_cc as dcc')
+            ->select(
+                DB::raw('COUNT(IIF(dcc.tipo_doc = \'FACT\', 1, 0)) AS cuantas_facturas'),
+                DB::raw('SUM(
+                    IIF(dcc.tipo_doc IN (\'FACT\', \'AJPM\', \'AJPA\', \'N/DB\'), 1, -1)
+                    * ROUND(dcc.saldo / dcc.tasa, 2)
+                ) AS saldo')
+            )
+            ->whereRaw('ROUND(dcc.saldo / dcc.tasa, 2) > 0')
+            ->whereRaw("DATEADD(dd,
+                DATEDIFF(DD, dcc.fec_emis, dcc.fec_venc),
+                CONVERT(SMALLDATETIME, (
+                    IIF(dcc.tipo_doc = 'FACT',
+                        IIF(dcc.campo3 = '', CONVERT(CHAR(10), dcc.fec_venc, 103), TRY_CONVERT(CHAR(10), dcc.campo3, 103)),
+                        CONVERT(CHAR(10), dcc.fec_venc, 103))
+                ), 103)
+            ) >= GETDATE()")
+            ->where('dcc.tipo_doc', 'FACT')
+            ->where('dcc.moneda', 'US$')
+            ->whereRaw('YEAR(dcc.fec_emis) >= 2024');
+
+        if ($vendedor) {
+            $query->where('dcc.co_ven', $vendedor);
+        }
+
+        $result = $query->first();
+
+        return [
+            'por_vencer' => (int) ($result->cuantas_facturas ?? 0),
+            'saldo_por_vencer' => (float) ($result->saldo ?? 0)
+        ];
     }
 
     /**
