@@ -53,6 +53,12 @@ interface ClienteInactivo {
     prom_vta_mens: number;
 }
 
+interface PaginationData {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -66,6 +72,7 @@ const retencionesStats = ref<RetencionesStats | null>(null);
 const cuentasPorCobrarStats = ref<CuentasXCobrarStats | null>(null);
 const promotionArticles = ref<Article[]>([]);
 const clientesInactivos = ref<ClienteInactivo[]>([]);
+const clientesInactivosPagination = ref<PaginationData | undefined>(undefined);
 // const orderStats = ref<OrderStatsData | null>(null);
 // const clientesSinPedidos = ref<ClientesSinPedidosData | null>(null);
 
@@ -124,10 +131,22 @@ const loadPromotionArticles = async () => {
 };
 
 // Función para cargar clientes inactivos
-const loadClientesInactivos = async () => {
+const loadClientesInactivos = async (page: number = 1) => {
     try {
-        const response = await axios.get('/api/dashboard/clientes-inactivos');
-        clientesInactivos.value = response.data.clientes;
+        loadingClientesInactivos.value = true;
+        const response = await axios.get('/api/dashboard/clientes-inactivos', {
+            params: {
+                page,
+                per_page: 10
+            }
+        });
+        clientesInactivos.value = response.data.data;
+        clientesInactivosPagination.value = {
+            current_page: response.data.current_page,
+            last_page: response.data.last_page,
+            per_page: response.data.per_page,
+            total: response.data.total
+        };
     } catch (error) {
         console.error('Error cargando clientes inactivos:', error);
     } finally {
@@ -135,11 +154,15 @@ const loadClientesInactivos = async () => {
     }
 };
 
+// Manejar cambio de página en clientes inactivos
+const handleClientesInactivosPageChange = (page: number) => {
+    loadClientesInactivos(page);
+};
+
 
 
 // Cargar todas las estadísticas de forma secuencial
 const loadAllStats = async () => {
-    // Cargar en orden secuencial, una después de la otra
     await loadClientsStats();
     await loadRetencionesStats();
     await loadCuentasPorCobrarStats();
@@ -193,7 +216,9 @@ onMounted(() => {
                 <!-- Clientes Inactivos -->
                 <ClientesInactivosList
                     :clientes="clientesInactivos"
+                    :pagination="clientesInactivosPagination"
                     :loading="loadingClientesInactivos"
+                    @change-page="handleClientesInactivosPageChange"
                 />
             </div>
 

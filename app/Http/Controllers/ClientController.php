@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\UpdateClientRequest;
 use App\Services\CuentasXCobrarService;
+use Barryvdh\DomPDF\Facade\Pdf as DomPDF;
 
 class ClientController extends Controller
 {
@@ -37,14 +38,39 @@ class ClientController extends Controller
                 });
             }
 
-            // Simular estructura de paginación para mantener compatibilidad con la vista
+            // Implementar paginación manual de 15 elementos
+            $perPage = 15;
+            $currentPage = $request->get('page', 1);
+            $total = $clientsData->count();
+            $offset = ($currentPage - 1) * $perPage;
+
+            // Obtener los elementos de la página actual
+            $paginatedData = $clientsData->slice($offset, $perPage)->values();
+
+            // Calcular información de paginación
+            $lastPage = ceil($total / $perPage);
+            $from = $total > 0 ? $offset + 1 : 0;
+            $to = min($offset + $perPage, $total);
+
+            // Generar enlaces de paginación
+            $links = [];
+            for ($i = 1; $i <= $lastPage; $i++) {
+                $links[] = [
+                    'url' => $request->fullUrlWithQuery(['page' => $i]),
+                    'label' => (string)$i,
+                    'active' => $i == $currentPage
+                ];
+            }
+
             $clients = [
-                'data' => $clientsData->values(),
-                'total' => $clientsData->count(),
-                'last_page' => 1,
-                'from' => $clientsData->count() > 0 ? 1 : 0,
-                'to' => $clientsData->count(),
-                'links' => []
+                'data' => $paginatedData,
+                'total' => $total,
+                'per_page' => $perPage,
+                'current_page' => $currentPage,
+                'last_page' => $lastPage,
+                'from' => $from,
+                'to' => $to,
+                'links' => $links
             ];
         }
         // Tabs de clientes procesados y temporales
@@ -232,6 +258,46 @@ class ClientController extends Controller
             'client' => $clientInfo,
             'balanceDetail' => $balanceDetail,
         ]);
+    }
+
+    /**
+     * Descargar PDF del detalle de cuentas por cobrar
+     */
+    public function downloadBalancePDF(string $co_cli, CuentasXCobrarService $cuentasXCobrarService)
+    {
+        $user = Auth::user();
+
+        // Obtener el detalle de cuentas por cobrar para el cliente específico
+        $balanceDetail = $cuentasXCobrarService->obtenerCuentasXCobrarDetallado($co_cli, $user->co_ven);
+
+        // Obtener información del cliente
+        $clientInfo = null;
+        $totalSaldo = 0;
+        
+        if ($balanceDetail->isNotEmpty()) {
+            $clientInfo = [
+                'co_cli' => $balanceDetail->first()->co_cli,
+                'cli_des' => $balanceDetail->first()->cli_Des
+            ];
+            
+            // Calcular el total del saldo
+            $totalSaldo = $balanceDetail->sum(function ($item) {
+                return floatval($item->saldo ?? 0);
+            });
+        }
+
+        // Generar PDF
+        $pdf = DomPDF::loadView('pdf.balance-detail', [
+            'client' => $clientInfo,
+            'balanceDetail' => $balanceDetail,
+            'totalSaldo' => $totalSaldo,
+            'fechaGeneracion' => now()->format('d/m/Y H:i:s')
+        ]);
+
+        $coCli = $clientInfo ? $clientInfo['co_cli'] : 'cliente';
+        $fileName = 'Cuentas_Cobrar_' . $coCli . '_' . date('Y-m-d') . '.pdf';
+        
+        return $pdf->download($fileName);
     }
 
     /**

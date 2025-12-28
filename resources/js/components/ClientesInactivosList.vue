@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Users, Calendar, TrendingDown, DollarSign } from 'lucide-vue-next';
+import { Users, Calendar, TrendingDown, DollarSign, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 
 interface Cliente {
     co_cli: string;
@@ -9,12 +9,24 @@ interface Cliente {
     prom_vta_mens: number;
 }
 
+interface PaginationData {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+}
+
 interface Props {
     clientes: Cliente[];
+    pagination?: PaginationData;
     loading?: boolean;
 }
 
 defineProps<Props>();
+
+const emit = defineEmits<{
+    changePage: [page: number];
+}>();
 
 const formatCurrency = (amount: number) => {
     if (!amount || amount === 0) return 'N/A';
@@ -122,6 +134,45 @@ const getMesesColor = (meses: number) => {
             <p class="text-gray-500 dark:text-gray-400">
                 No hay clientes inactivos
             </p>
+        </div>
+
+        <!-- Paginación -->
+        <div v-if="pagination && pagination.last_page > 1" class="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700 dark:text-gray-300">
+                    Mostrando
+                    <span class="font-medium">{{ (pagination.current_page - 1) * pagination.per_page + 1 }}</span>
+                    a
+                    <span class="font-medium">{{ Math.min(pagination.current_page * pagination.per_page, pagination.total) }}</span>
+                    de
+                    <span class="font-medium">{{ pagination.total }}</span>
+                    resultados
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button
+                        @click="emit('changePage', pagination.current_page - 1)"
+                        :disabled="pagination.current_page === 1"
+                        class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+                    >
+                        <ChevronLeft class="w-4 h-4" />
+                        Anterior
+                    </button>
+
+                    <span class="text-sm text-gray-700 dark:text-gray-300">
+                        Página {{ pagination.current_page }} de {{ pagination.last_page }}
+                    </span>
+
+                    <button
+                        @click="emit('changePage', pagination.current_page + 1)"
+                        :disabled="pagination.current_page === pagination.last_page"
+                        class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+                    >
+                        Siguiente
+                        <ChevronRight class="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </template>

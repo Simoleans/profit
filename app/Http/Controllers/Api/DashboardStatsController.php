@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\Article;
 use App\Models\Header;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use App\Services\FacturaService;
 use App\Services\CuentasXCobrarService;
 use App\Services\ClienteService;
@@ -103,12 +104,17 @@ class DashboardStatsController extends Controller
      */
     public function promotionArticles()
     {
-        $articles = Article::with(['line', 'category'])
-            ->where('co_cat', '9')
-            ->where('stock_act', '>', 0)
-            ->orderBy('art_des')
-            ->limit(35)
-            ->get(['co_art', 'art_des', 'prec_vta1', 'stock_act', 'co_lin', 'co_cat', 'uni_venta']);
+        $cacheKey = 'promotion_articles';
+
+        // Cachear por 15 minutos
+        $articles = Cache::remember($cacheKey, 900, function() {
+            return Article::with(['line', 'category'])
+                ->where('co_cat', '9')
+                ->where('stock_act', '>', 0)
+                ->orderBy('art_des')
+                ->limit(35)
+                ->get(['co_art', 'art_des', 'prec_vta1', 'stock_act', 'co_lin', 'co_cat', 'uni_venta']);
+        });
 
         return response()->json($articles);
     }
@@ -169,7 +175,13 @@ class DashboardStatsController extends Controller
         // Si es vendedor, solo los suyos
         $vendedor = $user->rol == 0 ? $user->co_ven : null;
 
-        $clientes = $this->clienteService->obtenerClientesSinPedidos($vendedor);
+        // Clave de caché única por vendedor
+        $cacheKey = "clientes_sin_pedidos_vendedor_{$vendedor}";
+
+        // Cachear por 8 minutos
+        $clientes = Cache::remember($cacheKey, 480, function() use ($vendedor) {
+            return $this->clienteService->obtenerClientesSinPedidos($vendedor);
+        });
 
         return response()->json([
             'clientes' => $clientes,
@@ -182,7 +194,7 @@ class DashboardStatsController extends Controller
     /**
      * Obtener clientes inactivos (más de 3 meses sin comprar)
      */
-    public function clientesInactivos()
+    public function clientesInactivos(Request $request)
     {
         $user = Auth::user();
 
@@ -190,14 +202,12 @@ class DashboardStatsController extends Controller
         // Si es vendedor, solo los suyos
         $vendedor = $user->rol == 0 ? $user->co_ven : null;
 
-        $clientes = $this->clienteService->obtenerClientesSinVentasPor3Meses($vendedor);
+        // Obtener parámetro de paginación (por defecto 10 items por página)
+        $perPage = $request->input('per_page', 10);
 
-        return response()->json([
-            'clientes' => $clientes,
-            'total' => $clientes->count(),
-            'codigo_vendedor' => $user->co_ven,
-            'is_admin' => $user->rol != 0
-        ]);
+        $clientes = $this->clienteService->obtenerClientesSinVentasPor3Meses($vendedor, $perPage);
+
+        return response()->json($clientes);
     }
 }
 

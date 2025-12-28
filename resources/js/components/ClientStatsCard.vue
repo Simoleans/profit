@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Users, TrendingUp, UserPlus } from 'lucide-vue-next';
+import { router } from '@inertiajs/vue3';
 
 interface ClientStats {
     total: number;
@@ -12,10 +13,14 @@ interface Props {
 }
 
 defineProps<Props>();
+
+const redirectClients = () => {
+    router.visit('/clients');
+};
 </script>
 
 <template>
-    <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-950/20 dark:to-gray-950/20 dark:border-sidebar-border max-w-sm w-full">
+    <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-950/20 dark:to-gray-950/20 dark:border-sidebar-border max-w-sm w-full cursor-pointer" @click="redirectClients">
         <!-- Fondo decorativo -->
         <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-600/5"></div>
         <div class="absolute top-0 right-0 w-16 h-16 bg-blue-500/3 rounded-full -translate-y-8 translate-x-8"></div>

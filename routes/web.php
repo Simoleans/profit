@@ -33,9 +33,11 @@ Route::get('search-seller', [UserController::class, 'searchSeller'])->middleware
 // Ruta para descargar documentos (debe ir antes del resource)
 Route::get('clients/media/{mediaId}/download', [ClientController::class, 'downloadDocument'])->middleware(['auth'])->name('clients.media.download');
 Route::get('clients/balance-detail/{co_cli}', [ClientController::class, 'balanceDetail'])->middleware(['auth'])->name('clients.balance-detail');
+Route::get('clients/balance-detail/{co_cli}/pdf', [ClientController::class, 'downloadBalancePDF'])->middleware(['auth'])->name('clients.balance-detail.pdf');
 Route::get('clientes-sin-pedidos', [\App\Http\Controllers\ClientesSinPedidosController::class, 'index'])->middleware(['auth'])->name('clientes-sin-pedidos');
 Route::resource('clients', ClientController::class)->middleware(['auth'])->names('clients');
 
+Route::get('articles/pdf', [ArticleController::class, 'downloadPDF'])->middleware(['auth'])->name('articles.pdf');
 Route::resource('articles', ArticleController::class)->middleware(['auth'])->names('articles');
 
 // Rutas para pedidos

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Wallet, AlertCircle, Clock } from 'lucide-vue-next';
+import { router } from '@inertiajs/vue3';
 
 interface CuentasXCobrarStats {
     vencidas: number;
@@ -26,10 +27,14 @@ const formatCurrency = (amount: number) => {
         maximumFractionDigits: 2
     }).format(amount);
 };
+
+const redirectCuentasPorCobrar = () => {
+    router.visit('/clients?tab=balance');
+};
 </script>
 
 <template>
-    <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-950/20 dark:to-gray-950/20 dark:border-sidebar-border max-w-sm w-full">
+    <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-950/20 dark:to-gray-950/20 dark:border-sidebar-border max-w-sm w-full cursor-pointer" @click="redirectCuentasPorCobrar">
         <!-- Fondo decorativo -->
         <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-600/5"></div>
         <div class="absolute top-0 right-0 w-20 h-20 bg-amber-500/3 rounded-full -translate-y-10 translate-x-10"></div>
@@ -83,12 +88,12 @@ const formatCurrency = (amount: number) => {
                         <div>
                             <p class="text-xs text-gray-600 dark:text-gray-400">Por vencer</p>
                             <p class="text-xs text-amber-700 dark:text-amber-300 font-medium">
-                                {{ formatCurrency(stats.saldo_por_vencer) }}
+                                {{ stats.por_vencer }} facturas
                             </p>
                         </div>
                     </div>
                     <span class="text-lg font-bold text-amber-900 dark:text-amber-100">
-                        {{ stats.por_vencer }}
+                        {{ formatCurrency(stats.saldo_por_vencer) }}
                     </span>
                 </div>
 
@@ -99,12 +104,12 @@ const formatCurrency = (amount: number) => {
                         <div>
                             <p class="text-xs text-gray-600 dark:text-gray-400">Vencidas</p>
                             <p class="text-xs text-red-700 dark:text-red-300 font-medium">
-                                {{ formatCurrency(stats.saldo_vencido) }}
+                                {{ stats.vencidas }} facturas
                             </p>
                         </div>
                     </div>
                     <span class="text-lg font-bold text-red-900 dark:text-red-100">
-                        {{ stats.vencidas }}
+                        {{ formatCurrency(stats.saldo_vencido) }}
                     </span>
                 </div>
             </div>

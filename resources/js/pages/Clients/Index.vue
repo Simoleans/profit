@@ -89,8 +89,8 @@ const goToPage = (url: string) => {
             <!-- Card contenedor de la tabla -->
             <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
                 <!-- Tabs -->
-                <div class="border-b border-gray-200 dark:border-gray-700">
-                    <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                <div class="border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+                    <nav class="-mb-px flex space-x-8 px-6 min-w-max" aria-label="Tabs">
                         <button
                             @click="changeTab('processed')"
                             :class="[

@@ -46,13 +46,14 @@ class ClienteService
     }
 
     /**
-     * Obtener TOP 20 de clientes sin ventas por más de 3 meses
+     * Obtener clientes sin ventas por más de 3 meses con paginación
      * Ordenado por el promedio mensual de las ventas del último año desde la última fecha de compra
      *
      * @param string $vendedor
-     * @return \Illuminate\Support\Collection
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
-    public function obtenerClientesSinVentasPor3Meses($vendedor = null)
+    public function obtenerClientesSinVentasPor3Meses($vendedor = null, $perPage = 10)
     {
         $query = DB::connection('factura')
             ->table('clientes as cli')
@@ -76,8 +77,7 @@ class ClienteService
 
         return $query->groupBy('cli.co_cli', 'cli.cli_des')
             ->orderByDesc('prom_vta_mens')
-            ->limit(20)
-            ->get();
+            ->paginate($perPage);
     }
 }
 

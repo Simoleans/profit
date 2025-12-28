@@ -8,6 +8,7 @@ use App\Models\Article;
 use App\Models\Category;
 use App\Models\Line;
 use App\Models\Subl;
+use Barryvdh\DomPDF\Facade\Pdf as DomPDF;
 
 class ArticleController extends Controller
 {
@@ -113,5 +114,40 @@ class ArticleController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    /**
+     * Descargar PDF del catálogo de artículos
+     */
+    public function downloadPDF(Request $request)
+    {
+        // Obtener filtros de la request (mismos que en index)
+        $filters = [
+            'search' => $request->get('search', ''),
+            'category' => $request->get('category', ''),
+            'line' => $request->get('line', ''),
+            'subl' => $request->get('subl', ''),
+        ];
+
+        // Obtener artículos con los mismos filtros pero sin paginación
+        $articles = Article::query()
+            ->select(['co_art', 'art_des', 'stock_act', 'prec_vta1', 'co_lin', 'co_subl', 'co_cat'])
+            ->with([
+                'line:co_lin,lin_des'
+            ])
+            ->filter($filters)
+            ->orderBy('art_des')
+            ->get();
+
+        // Generar PDF
+        $pdf = DomPDF::loadView('pdf.articles', [
+            'articles' => $articles,
+            'fechaGeneracion' => now()->format('d/m/Y H:i:s'),
+            'totalArticulos' => $articles->count()
+        ]);
+
+        $fileName = 'Catalogo_Articulos_' . date('Y-m-d') . '.pdf';
+        
+        return $pdf->download($fileName);
     }
 }

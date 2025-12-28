@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import ShowArticle from '@/components/ShowArticle.vue';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 
 // Props recibidas del controlador
 const props = defineProps({
@@ -92,6 +92,19 @@ const goToPage = (url) => {
         router.visit(url);
     }
 };
+
+// Función para construir la URL del PDF con los filtros actuales
+const pdfUrl = computed(() => {
+    const params = new URLSearchParams();
+
+    if (searchQuery.value) params.append('search', searchQuery.value);
+    if (selectedCategory.value) params.append('category', selectedCategory.value);
+    if (selectedLine.value) params.append('line', selectedLine.value);
+    if (selectedSubl.value) params.append('subl', selectedSubl.value);
+
+    const queryString = params.toString();
+    return `/articles/pdf${queryString ? '?' + queryString : ''}`;
+});
 </script>
 
 <template>
@@ -109,6 +122,16 @@ const goToPage = (url) => {
                         Consulta de productos y precios del inventario
                     </p>
                 </div>
+                <a
+                    :href="pdfUrl"
+                    target="_blank"
+                    class="inline-flex items-center px-4 py-2 border border-red-600 rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 dark:border-red-700"
+                >
+                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Descargar PDF
+                </a>
             </div>
 
             <!-- Card contenedor de la tabla -->
