@@ -143,7 +143,7 @@ const formatPrice = (price) => {
                         </div>
                     </div>
 
-                    <div class="space-y-2">
+                   <!--  <div class="space-y-2">
                         <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">Stock Actual</Label>
                         <div class="rounded-md px-3 py-2 text-sm font-semibold"
                              :class="articleDetails.stock_act > 0
@@ -151,7 +151,7 @@ const formatPrice = (price) => {
                                 : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'">
                             {{ articleDetails.stock_act > 0 ? Math.floor(articleDetails.stock_act) : 'SIN STOCK' }}
                         </div>
-                    </div>
+                    </div> -->
                 </div>
 
                 <!-- Nombre/Descripción -->

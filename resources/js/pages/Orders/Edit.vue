@@ -336,9 +336,9 @@ const submit = () => {
                                                         <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
                                                             {{ article.co_art }}
                                                         </span>
-                                                        <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300">
+                                                        <!-- <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300">
                                                             Stock: {{ Math.floor(article.stock_act) }} {{ article.uni_venta }}
-                                                        </span>
+                                                        </span> -->
                                                     </div>
                                                 </div>
                                                 <div class="flex-shrink-0">

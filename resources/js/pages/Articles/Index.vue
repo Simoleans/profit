@@ -305,12 +305,12 @@ const pdfUrl = computed(() => {
                                         <!-- Indicadores: Stock y Promoción -->
                                         <div class="flex flex-wrap items-center gap-1">
                                             <!-- Indicador de stock -->
-                                            <span class="inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[10px] font-medium"
+                                            <!-- <span class="inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[10px] font-medium"
                                                   :class="article.stock_act > 0
                                                     ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
                                                     : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'">
                                                 {{ article.stock_act > 0 ? `Stock: ${Math.floor(article.stock_act)}` : 'SIN STOCK' }}
-                                            </span>
+                                            </span> -->
 
                                             <!-- Etiqueta de promoción si co_cat = 9 -->
                                             <span v-if="article.co_cat?.toString().trim() === '9'" class="inline-flex w-fit items-center rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-700 dark:bg-orange-900 dark:text-orange-300">
