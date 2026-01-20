@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Cache;
 use App\Services\FacturaService;
 use App\Services\CuentasXCobrarService;
 use App\Services\ClienteService;
+use App\Enums\UserRole;
 
 class DashboardStatsController extends Controller
 {
@@ -33,14 +34,14 @@ class DashboardStatsController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->rol == 0) {
+        if ($user->isVendedor()) {
             $totalClients = Client::active()->where('co_ven', $user->co_ven)->count();
             /* $newClientsThisMonth = Client::active()
                 ->where('co_ven', $user->co_ven)
                 ->orderBy('co_cli', 'desc')
                 ->limit(5)
                 ->count(); */
-        } else {
+        } elseif ($user->isSupervisor()) {
             $totalClients = Client::active()->count();
             /* $newClientsThisMonth = Client::active()
                 ->orderBy('co_cli', 'desc')
@@ -50,8 +51,7 @@ class DashboardStatsController extends Controller
 
         return response()->json([
             'total' => $totalClients,
-            //'new_this_month' => $newClientsThisMonth,
-            'is_admin' => $user->rol != 0
+            'is_admin' => $user->isAdministrador()
         ]);
     }
 
@@ -61,7 +61,7 @@ class DashboardStatsController extends Controller
     public function retenciones()
     {
         $user = Auth::user();
-        $totalFacturas = $this->facturaService->obtenerTotalFacturas($user->co_ven);
+        $totalFacturas = $this->facturaService->obtenerTotalFacturas($user->isVendedor(),$user->isSupervisor(),$user);
 
         return response()->json([
             'total' => $totalFacturas,
@@ -76,16 +76,16 @@ class DashboardStatsController extends Controller
     public function cuentasPorCobrar()
     {
         $user = Auth::user();
-        $vendedor = $user->rol == 0 ? $user->co_ven : null;
+        $vendedor = $user->isVendedor() ? $user->co_ven : null;
 
         //  Resumen total
-        $resumenTotal = $this->cuentasXCobrarService->obtenerResumenTotal($vendedor);
+        $resumenTotal = $this->cuentasXCobrarService->obtenerResumenTotal($user->isVendedor(),$user->isSupervisor(),$user);
 
         // Resumen vencidas
-        $resumenVencidas = $this->cuentasXCobrarService->obtenerResumenVencidas($vendedor);
+        $resumenVencidas = $this->cuentasXCobrarService->obtenerResumenVencidas($user->isVendedor(),$user->isSupervisor(),$user);
 
         // Resumen por vencer
-        $resumenPorVencer = $this->cuentasXCobrarService->obtenerResumenPorVencer($vendedor);
+        $resumenPorVencer = $this->cuentasXCobrarService->obtenerResumenPorVencer($user->isVendedor(),$user->isSupervisor(),$user);
 
         return response()->json([
             'total' => $resumenTotal['total'],
@@ -95,7 +95,7 @@ class DashboardStatsController extends Controller
             'por_vencer' => $resumenPorVencer['por_vencer'],
             'saldo_por_vencer' => $resumenPorVencer['saldo_por_vencer'],
             'codigo_vendedor' => $user->co_ven,
-            'is_admin' => $user->rol != 0
+            'is_admin' => $user->isAdministrador()
         ]);
     }
 

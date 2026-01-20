@@ -111,8 +111,57 @@ const searchSellerName = async (coVen) => {
     }
 };
 
+// Función para buscar nombre por código de supervisor
+const searchSupervisorName = async (coSup) => {
+    if (!coSup.trim()) {
+        form.value.name = '';
+        nameFound.value = false;
+        return;
+    }
+
+    searchingName.value = true;
+    nameFound.value = false;
+
+    try {
+        const response = await apiRequest('GET', '/search-supervisor', { co_sup: coSup });
+
+        if (response.ok) {
+            const data = await response.json();
+            form.value.name = data.nombre || '';
+            nameFound.value = true;
+            // Limpiar error de código si existía
+            if (errors.value.co_ven) {
+                delete errors.value.co_ven;
+            }
+        } else {
+            const errorData = await response.json();
+            form.value.name = '';
+            nameFound.value = false;
+            errors.value.co_ven = errorData.error || 'Supervisor no encontrado';
+        }
+    } catch (error) {
+        console.error('Error buscando supervisor:', error);
+        form.value.name = '';
+        nameFound.value = false;
+        errors.value.co_ven = 'Error al buscar supervisor';
+    } finally {
+        searchingName.value = false;
+    }
+};
+
+// Función unificada de búsqueda según el rol
+const searchName = async (code) => {
+    if (form.value.rol === '2') {
+        // Si es Supervisor, buscar en tabla supervisor
+        await searchSupervisorName(code);
+    } else {
+        // Si es Vendedor o Administrador, buscar en tabla vendedor
+        await searchSellerName(code);
+    }
+};
+
 // Crear función debounce para la búsqueda
-const debouncedSearch = debounce(searchSellerName, 500);
+const debouncedSearch = debounce(searchName, 500);
 
 // Watch para buscar automáticamente cuando cambie el código
 watch(() => form.value.co_ven, (newValue) => {
@@ -126,6 +175,48 @@ watch(() => form.value.co_ven, (newValue) => {
             delete errors.value.co_ven;
         }
     }
+});
+
+// Watch para limpiar campos cuando cambia el rol
+watch(() => form.value.rol, () => {
+    form.value.co_ven = '';
+    form.value.name = '';
+    nameFound.value = false;
+    if (errors.value.co_ven) {
+        delete errors.value.co_ven;
+    }
+});
+
+// Computed para obtener el label del campo código según el rol
+const codigoLabel = computed(() => {
+    if (form.value.rol === '2') {
+        return 'Código de supervisor';
+    }
+    return 'Código de vendedor';
+});
+
+// Computed para obtener el placeholder del campo código según el rol
+const codigoPlaceholder = computed(() => {
+    if (form.value.rol === '2') {
+        return 'Ej: SUP001';
+    }
+    return 'Ej: VEN001';
+});
+
+// Computed para obtener el mensaje de ayuda según el rol
+const ayudaMensaje = computed(() => {
+    if (form.value.rol === '2') {
+        return 'El nombre se obtiene automáticamente de la base de datos de supervisores';
+    }
+    return 'El nombre se obtiene automáticamente de la base de datos de vendedores';
+});
+
+// Computed para obtener el mensaje de éxito según el rol
+const exitoMensaje = computed(() => {
+    if (form.value.rol === '2') {
+        return 'Supervisor encontrado:';
+    }
+    return 'Vendedor encontrado:';
 });
 
 // Función para resetear el formulario
@@ -164,16 +255,31 @@ const resetForm = () => {
                 </DialogHeader>
 
                 <div class="space-y-4">
-                    <!-- Código de vendedor -->
+                    <!-- Rol -->
                     <div class="grid gap-2">
-                        <Label for="co_ven">Código de vendedor</Label>
+                        <Label for="rol">Rol</Label>
+                        <select
+                            id="rol"
+                            v-model="form.rol"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <option value="0">Vendedor</option>
+                            <option value="1">Administrador</option>
+                            <option value="2">Supervisor</option>
+                        </select>
+                        <InputError :message="errors.rol" />
+                    </div>
+
+                    <!-- Código (vendedor o supervisor según el rol) -->
+                    <div class="grid gap-2">
+                        <Label for="co_ven">{{ codigoLabel }}</Label>
                         <div class="relative">
                             <Input
                                 id="co_ven"
                                 v-model="form.co_ven"
                                 type="text"
                                 required
-                                placeholder="Ej: VEN001"
+                                :placeholder="codigoPlaceholder"
                             />
                             <div v-if="searchingName" class="absolute right-3 top-1/2 -translate-y-1/2">
                                 <svg class="h-4 w-4 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
@@ -184,7 +290,7 @@ const resetForm = () => {
                         </div>
                         <InputError :message="errors.co_ven" />
                         <p v-if="nameFound && form.name" class="text-sm text-green-600">
-                            ✓ Vendedor encontrado: {{ form.name }}
+                            ✓ {{ exitoMensaje }} {{ form.name }}
                         </p>
                     </div>
 
@@ -197,26 +303,12 @@ const resetForm = () => {
                             type="text"
                             readonly
                             :class="nameFound ? 'bg-green-50 border-green-200' : 'bg-gray-50'"
-                            placeholder="Se obtendrá automáticamente del código de vendedor"
+                            placeholder="Se obtendrá automáticamente del código"
                         />
                         <InputError :message="errors.name" />
                         <p class="text-sm text-gray-500">
-                            El nombre se obtiene automáticamente de la base de datos de vendedores
+                            {{ ayudaMensaje }}
                         </p>
-                    </div>
-
-                    <!-- Rol -->
-                    <div class="grid gap-2">
-                        <Label for="rol">Rol</Label>
-                        <select
-                            id="rol"
-                            v-model="form.rol"
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            <option value="0">Vendedor</option>
-                            <option value="1">Administrador</option>
-                        </select>
-                        <InputError :message="errors.rol" />
                     </div>
 
                     <!-- Contraseña -->

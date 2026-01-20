@@ -12,7 +12,7 @@ class FacturaService
      * @param string $codigoVendedor
      * @return int
      */
-    public function obtenerTotalFacturas($codigoVendedor)
+    /* public function obtenerTotalFacturas($codigoVendedor, $supervisor, $user)
     {
         $result = DB::connection('factura')
                     ->selectOne("
@@ -26,7 +26,36 @@ class FacturaService
                     ", ['codigoVendedor' => $codigoVendedor]);
 
         return $result->cuantas ?? 0;
+    } */
+
+    public function obtenerTotalFacturas($vendedor = null, $supervisor = null, $user)
+    {
+        $query = DB::connection('factura')
+            ->table('factura as fac')
+            ->join('clientes as cli', 'fac.co_cli', '=', 'cli.co_cli')
+            ->join('vendedor as ven', 'fac.co_ven', '=', 'ven.co_ven')
+            ->whereNotIn('fac.fact_num', function ($q) {
+                $q->select('dcc.nro_orig')
+                ->from('docum_cc as dcc')
+                ->where('dcc.tipo_doc', 'AJNM')
+                ->where('dcc.campo8', 'IVA');
+            })
+            ->where('fac.co_sucu', '001')
+            ->where('fac.saldo', '>', 0);
+
+        $coVen = trim((string) $user->co_ven);
+
+        if ($vendedor) {
+            $query->whereRaw('LTRIM(RTRIM(fac.co_ven)) = ?', [$coVen]);
+        }
+
+        if ($supervisor) {
+            $query->whereRaw('LTRIM(RTRIM(ven.campo1)) = ?', [$coVen]);
+        }
+
+        return (int) $query->count('fac.fact_num');
     }
+
 
     /**
      * Obtener el detalle de las facturas.

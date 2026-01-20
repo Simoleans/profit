@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\User;
 use App\Models\Seller;
+use App\Models\Supervisor;
 use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
@@ -51,25 +52,41 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'co_ven' => 'required|string|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'rol' => 'required|in:0,1',
+            'rol' => 'required|in:0,1,2',
         ]);
 
-        // Verificar que el código de vendedor existe en la tabla de vendedores
         try {
-            $seller = Seller::where('co_ven', $validated['co_ven'])->first();
+            $userName = $validated['name'];
+            $coVen = $validated['co_ven'];
 
-            if (!$seller) {
-                return back()->withErrors([
-                    'co_ven' => 'El código de vendedor no existe en la base de datos.'
-                ]);
+            // Validar según el rol
+            if ($validated['rol'] == 2) {
+                // Si es Supervisor, validar en tabla supervisor
+                $supervisor = Supervisor::where('co_sup', $coVen)->first();
+
+                if (!$supervisor) {
+                    return back()->withErrors([
+                        'co_ven' => 'El código de supervisor no existe en la base de datos.'
+                    ]);
+                }
+
+                $userName = $supervisor->nombre_sup ?? $validated['name'];
+            } else {
+                // Si es Vendedor o Administrador, validar en tabla vendedores
+                $seller = Seller::where('co_ven', $coVen)->first();
+
+                if (!$seller) {
+                    return back()->withErrors([
+                        'co_ven' => 'El código de vendedor no existe en la base de datos.'
+                    ]);
+                }
+
+                $userName = $seller->ven_des ?? $validated['name'];
             }
 
-            // Usar el nombre obtenido de la tabla vendedores, no el del formulario
-            $sellerName = $seller->ven_des ?? $validated['name'];
-
             User::create([
-                'name' => $sellerName,
-                'co_ven' => $validated['co_ven'],
+                'name' => $userName,
+                'co_ven' => $coVen,
                 'password' => bcrypt($validated['password']),
                 'rol' => $validated['rol'],
                 'status' => 1, // Usuario activo por defecto
@@ -78,8 +95,9 @@ class UserController extends Controller
             return redirect()->route('users.index')->with('success', 'Usuario creado exitosamente.');
 
         } catch (\Exception $e) {
+            $roleText = $validated['rol'] == 2 ? 'supervisor' : 'vendedor';
             return back()->withErrors([
-                'co_ven' => 'Error al verificar el código de vendedor: ' . $e->getMessage()
+                'co_ven' => "Error al verificar el código de {$roleText}: " . $e->getMessage()
             ]);
         }
     }
@@ -107,24 +125,20 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
-        // Reglas de validación (solo rol y contraseña opcional)
         $rules = [
-            'rol' => 'required|in:0,1',
+            'rol' => 'required|in:0,1,2',
         ];
 
-        // Solo validar contraseña si se proporciona
         if ($request->filled('password')) {
             $rules['password'] = 'required|string|min:8|confirmed';
         }
 
         $validated = $request->validate($rules);
 
-        // Preparar datos para actualizar (solo rol)
         $updateData = [
             'rol' => $validated['rol'],
         ];
 
-        // Solo actualizar contraseña si se proporcionó una nueva
         if ($request->filled('password')) {
             $updateData['password'] = bcrypt($validated['password']);
         }
@@ -178,6 +192,33 @@ class UserController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Error al buscar vendedor: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Buscar supervisor por código
+     */
+    public function searchSupervisor(Request $request)
+    {
+        $coSup = $request->get('co_sup');
+
+        if (!$coSup) {
+            return response()->json(['error' => 'Código de supervisor requerido'], 400);
+        }
+
+        try {
+            $supervisor = Supervisor::where('co_sup', $coSup)->first();
+
+            if (!$supervisor) {
+                return response()->json(['error' => 'Supervisor no encontrado'], 404);
+            }
+
+            return response()->json([
+                'co_sup' => $supervisor->co_sup,
+                'nombre' => $supervisor->nombre_sup ?? '',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al buscar supervisor: ' . $e->getMessage()], 500);
         }
     }
 }

@@ -165,14 +165,14 @@ const generateWhatsAppMessage = () => {
             <!-- Header -->
             <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
                         Pedido #{{ order.fact_num }}
                     </h1>
                     <p class="text-gray-600 dark:text-gray-400">
                         Detalles completos del pedido
                     </p>
                 </div>
-                <div class="flex gap-2 no-print">
+                <div class="grid grid-cols-3 lg:grid-cols-4 gap-2 no-print">
                     <button
                         @click="printOrder"
                         class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:hover:bg-gray-600"
@@ -231,7 +231,7 @@ const generateWhatsAppMessage = () => {
                     <!-- Estado y fechas -->
                     <div class="grid grid-cols-2 gap-2">
                         <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
-                        <div class="px-4 py-5 sm:p-6">
+                        <div class="px-4 py-5 sm:p-6 border border-gray-300">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
                                     Estado del Pedido
@@ -263,7 +263,7 @@ const generateWhatsAppMessage = () => {
                             </div>
                         </div>
                     </div>
-                    <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
+                    <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800 border border-gray-300">
                         <div class="px-4 py-5 sm:p-6">
                             <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white mb-4">
                                 Resumen Financiero
@@ -299,7 +299,7 @@ const generateWhatsAppMessage = () => {
                             </p>
 
                             <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 border border-gray-300">
                                     <thead class="bg-gray-50 dark:bg-gray-700">
                                         <tr>
                                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -349,7 +349,7 @@ const generateWhatsAppMessage = () => {
                 <!-- Información lateral -->
                 <div class="space-y-6">
                     <!-- Cliente -->
-                    <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
+                    <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800 border border-gray-300">
                         <div class="px-4 py-5 sm:p-6">
                             <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white mb-4">
                                 Información del Cliente

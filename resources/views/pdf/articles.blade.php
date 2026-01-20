@@ -66,7 +66,7 @@
                 <th>Descripción</th>
                 <th>Línea</th>
                 <th class="text-right">Precio Venta</th>
-                {{-- <th class="text-right">Stock</th> --}}
+                <th class="text-right">Stock</th>
             </tr>
         </thead>
         <tbody>
@@ -76,7 +76,7 @@
                     <td>{{ $article->art_des }}</td>
                     <td>{{ $article->line->lin_des ?? 'Sin línea' }}</td>
                     <td class="text-right">${{ number_format(floatval($article->prec_vta1 ?? 0), 2, '.', ',') }}</td>
-                    {{-- <td class="text-right">{{ number_format(floatval($article->stock_act ?? 0), 0, '.', ',') }}</td> --}}
+                    <td class="text-right">{{ number_format(floatval($article->stock_act ?? 0), 0, '.', ',') }}</td>
                 </tr>
             @empty
                 <tr>

@@ -19,7 +19,7 @@ const page = usePage();
                 <SidebarMenuButton as-child :is-active="urlIsActive(item.href, page.url)" :tooltip="item.title">
                     <Link :href="item.href">
                         <component :is="item.icon" />
-                        <span>{{ item.title }}</span>
+                        <span class="text-[15px] font-semibold">{{ item.title }}</span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>

@@ -44,14 +44,22 @@ watch(searchQuery, () => {
 
 // Función para obtener clase del badge según rol
 const getRoleBadgeClass = (rol) => {
-    return rol === '0'
-        ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-        : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+    if (rol === '0') {
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+    } else if (rol === '1') {
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+    } else if (rol === '2') {
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
+    }
+    return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
 };
 
 // Función para obtener texto del rol
 const getRoleText = (rol) => {
-    return rol === '0' ? 'Vendedor' : 'Admin';
+    if (rol === 0) return 'Vendedor';
+    if (rol === 1) return 'Administrador';
+    if (rol === 2) return 'Supervisor';
+    return 'Desconocido';
 };
 
 // Función para ir a una página específica

@@ -84,13 +84,13 @@ const formatPrice = (price: number) => {
                             <span v-if="article.line" class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                                 {{ article.line.lin_des }}
                             </span>
-                           <!--  <span class="inline-flex items-center gap-1 text-xs"
+                            <span class="inline-flex items-center gap-1 text-xs"
                                   :class="article.stock_act > 0
                                     ? 'text-green-600 dark:text-green-400'
                                     : 'text-red-600 dark:text-red-400'">
                                 <Package class="w-3 h-3" />
                                 Stock: {{ Math.floor(article.stock_act) }}
-                            </span> -->
+                            </span>
                         </div>
                     </div>
 

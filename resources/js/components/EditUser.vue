@@ -163,6 +163,7 @@ watch(() => props.user, () => {
                         >
                             <option value="0">Vendedor</option>
                             <option value="1">Administrador</option>
+                            <option value="2">Supervisor</option>
                         </select>
                         <InputError :message="errors.rol" />
                     </div>

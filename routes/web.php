@@ -29,6 +29,7 @@ Route::prefix('api/dashboard')->middleware(['auth'])->group(function () {
 
 Route::resource('users', UserController::class)->middleware(['auth'])->names('users');
 Route::get('search-seller', [UserController::class, 'searchSeller'])->middleware(['auth'])->name('search.seller');
+Route::get('search-supervisor', [UserController::class, 'searchSupervisor'])->middleware(['auth'])->name('search.supervisor');
 
 // Ruta para descargar documentos (debe ir antes del resource)
 Route::get('clients/media/{mediaId}/download', [ClientController::class, 'downloadDocument'])->middleware(['auth'])->name('clients.media.download');

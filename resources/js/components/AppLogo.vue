@@ -3,7 +3,7 @@
 </script>
 
 <template>
-    <img src="/img/logo.png" alt="Logo" class="h-8 w-auto" />
+    <img src="/img/logo.png" alt="Logo" class="h-10 w-auto" />
 
     <!-- Código anterior comentado
     <div class="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">

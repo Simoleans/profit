@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -57,10 +58,6 @@ class User extends Authenticatable
         'status' => 1, // Por defecto, usuarios activos
     ];
 
-    protected $casts = [
-        'status' => 'boolean',
-    ];
-
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -81,6 +78,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'status' => 'boolean',
+            'rol' => UserRole::class,
         ];
     }
 
@@ -90,5 +89,37 @@ class User extends Authenticatable
     public function scopeActive($query)
     {
         return $query->where('status', 1);
+    }
+
+    /**
+     * Verificar si el usuario es vendedor
+     */
+    public function isVendedor(): bool
+    {
+        return $this->rol === UserRole::VENDEDOR;
+    }
+
+    /**
+     * Verificar si el usuario es administrador
+     */
+    public function isAdministrador(): bool
+    {
+        return $this->rol === UserRole::ADMINISTRADOR;
+    }
+
+    /**
+     * Verificar si el usuario es supervisor
+     */
+    public function isSupervisor(): bool
+    {
+        return $this->rol === UserRole::SUPERVISOR;
+    }
+
+    /**
+     * Verificar si el usuario tiene permisos de administrador o supervisor
+     */
+    public function isAdminOrSupervisor(): bool
+    {
+        return $this->rol?->isAdminOrSupervisor() ?? false;
     }
 }
