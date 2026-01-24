@@ -119,9 +119,9 @@ const generateWhatsAppMessage = () => {
     message += `*Código:* ${props.order.client.co_cli}\n\n`
 
     // Descripción si existe
-    if (props.order.descrip) {
+   /*  if (props.order.descrip) {
         message += `*Descripción:* ${props.order.descrip}\n\n`
-    }
+    } */
 
     // Artículos
     message += `*ARTÍCULOS (${props.order.rows.length}):*\n`
@@ -252,7 +252,7 @@ const generateWhatsAppMessage = () => {
                                 </div>
                             </div> -->
 
-                            <div v-if="order.descrip" class="mt-4">
+                            <div v-if="order.descrip" class="mt-4 no-print">
                                 <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Descripción</p>
                                 <p class="text-gray-900 dark:text-white">{{ order.descrip }}</p>
                             </div>

@@ -69,7 +69,7 @@ const getStatusText = (status, anulada) => {
         case 'FACT': return 'Facturado'
         case 'C':
         case 'CAN': return 'Cancelado'
-        case 'A':
+        case 'R':
         case 'ANU': return 'Anulado'
         default: return status
     }

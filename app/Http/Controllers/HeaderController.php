@@ -82,7 +82,8 @@ class HeaderController extends Controller
     public function index(Request $request)
     {
         $query = Header::with(['client', 'rows']) // Quitar seller porque está en otra conexión
-            ->where('co_ven', Auth::user()->co_ven);
+            ->where('co_ven', Auth::user()->co_ven)
+            ->where('status', 'P');
 
 
         // Aplicar filtro de búsqueda si existe
