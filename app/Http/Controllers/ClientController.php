@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\UpdateClientRequest;
 use App\Services\CuentasXCobrarService;
+use App\Services\FacturaService;
 use Barryvdh\DomPDF\Facade\Pdf as DomPDF;
 
 class ClientController extends Controller
@@ -20,10 +21,10 @@ class ClientController extends Controller
     /**
      * Display a listing of clients for the authenticated user.
      */
-    public function index(Request $request, CuentasXCobrarService $cuentasXCobrarService)
+    public function index(Request $request, CuentasXCobrarService $cuentasXCobrarService, FacturaService $facturaService)
     {
         $search = $request->get('search', '');
-        $tab = $request->get('tab', 'processed'); // 'processed', 'temp' o 'balance'
+        $tab = $request->get('tab', 'processed'); // 'processed', 'temp', 'balance' o 'retenciones'
         $user = Auth::user();
 
         // Tab de clientes con saldo
@@ -46,6 +47,58 @@ class ClientController extends Controller
 
             // Obtener los elementos de la página actual
             $paginatedData = $clientsData->slice($offset, $perPage)->values();
+
+            // Calcular información de paginación
+            $lastPage = ceil($total / $perPage);
+            $from = $total > 0 ? $offset + 1 : 0;
+            $to = min($offset + $perPage, $total);
+
+            // Generar enlaces de paginación
+            $links = [];
+            for ($i = 1; $i <= $lastPage; $i++) {
+                $links[] = [
+                    'url' => $request->fullUrlWithQuery(['page' => $i]),
+                    'label' => (string)$i,
+                    'active' => $i == $currentPage
+                ];
+            }
+
+            $clients = [
+                'data' => $paginatedData,
+                'total' => $total,
+                'per_page' => $perPage,
+                'current_page' => $currentPage,
+                'last_page' => $lastPage,
+                'from' => $from,
+                'to' => $to,
+                'links' => $links
+            ];
+        }
+        // Tab de facturas sin retenciones
+        elseif($tab === 'retenciones') {
+            // Determinar rol del usuario
+            $vendedor = ($user->rol == 0) ? true : null;
+            $supervisor = ($user->rol == 1) ? true : null;
+
+            $facturasData = $facturaService->obtenerDetalleFacturas($vendedor, $supervisor, $user);
+
+            // Convertir a colección y aplicar filtro de búsqueda si existe
+            if ($search) {
+                $facturasData = $facturasData->filter(function ($factura) use ($search) {
+                    return stripos($factura->fact_num, $search) !== false ||
+                           stripos($factura->co_cli, $search) !== false ||
+                           stripos($factura->cli_des, $search) !== false;
+                });
+            }
+
+            // Implementar paginación manual de 15 elementos
+            $perPage = 15;
+            $currentPage = $request->get('page', 1);
+            $total = $facturasData->count();
+            $offset = ($currentPage - 1) * $perPage;
+
+            // Obtener los elementos de la página actual
+            $paginatedData = $facturasData->slice($offset, $perPage)->values();
 
             // Calcular información de paginación
             $lastPage = ceil($total / $perPage);
@@ -273,13 +326,13 @@ class ClientController extends Controller
         // Obtener información del cliente
         $clientInfo = null;
         $totalSaldo = 0;
-        
+
         if ($balanceDetail->isNotEmpty()) {
             $clientInfo = [
                 'co_cli' => $balanceDetail->first()->co_cli,
                 'cli_des' => $balanceDetail->first()->cli_Des
             ];
-            
+
             // Calcular el total del saldo
             $totalSaldo = $balanceDetail->sum(function ($item) {
                 return floatval($item->saldo ?? 0);
@@ -296,7 +349,7 @@ class ClientController extends Controller
 
         $coCli = $clientInfo ? $clientInfo['co_cli'] : 'cliente';
         $fileName = 'Cuentas_Cobrar_' . $coCli . '_' . date('Y-m-d') . '.pdf';
-        
+
         return $pdf->download($fileName);
     }
 

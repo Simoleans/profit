@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { FileText, TrendingUp, Calculator } from 'lucide-vue-next';
+import { router } from '@inertiajs/vue3';
 
 interface RetencionesStats {
     total: number;
@@ -11,10 +12,14 @@ interface Props {
 }
 
 defineProps<Props>();
+
+const redirectToRetenciones = () => {
+    router.visit('/clients?tab=retenciones');
+};
 </script>
 
 <template>
-    <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-950/20 dark:to-gray-950/20 dark:border-sidebar-border max-w-sm w-full">
+    <div class="relative overflow-hidden rounded-xl border border-sidebar-border/70 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-950/20 dark:to-gray-950/20 dark:border-sidebar-border max-w-sm w-full cursor-pointer" @click="redirectToRetenciones">
         <!-- Fondo decorativo -->
         <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-600/5"></div>
         <div class="absolute top-0 right-0 w-20 h-20 bg-emerald-500/3 rounded-full -translate-y-10 translate-x-10"></div>

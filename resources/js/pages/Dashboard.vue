@@ -163,11 +163,11 @@ const handleClientesInactivosPageChange = (page: number) => {
 
 // Cargar todas las estadísticas de forma secuencial
 const loadAllStats = async () => {
-    await loadClientsStats();
+    //await loadClientsStats();
     await loadRetencionesStats();
-    await loadCuentasPorCobrarStats();
-    await loadPromotionArticles();
-    await loadClientesInactivos();
+    //await loadCuentasPorCobrarStats();
+    //await loadPromotionArticles();
+    //await loadClientesInactivos();
 
 };
 
