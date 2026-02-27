@@ -206,12 +206,12 @@
             </div>
             @endif
 
-            @if($order->dir_ent)
+          {{--   @if($order->dir_ent)
             <div style="margin-top: 20px; padding: 12px; background-color: #f8f9fa; border: 1px solid #ddd;">
                 <h4 style="margin: 0 0 8px 0; color: #333;">Dirección de Entrega:</h4>
                 <p style="margin: 0; color: #333;">{{ $order->dir_ent }}</p>
             </div>
-            @endif
+            @endif --}}
         </div>
 
         <div class="footer">

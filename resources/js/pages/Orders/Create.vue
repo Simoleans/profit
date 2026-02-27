@@ -236,7 +236,7 @@ const submit = () => {
                             </div>
 
                             <!-- Dirección de Entrega -->
-                            <div class="space-y-2">
+                            <!-- <div class="space-y-2">
                                 <Label for="dir_ent">Dirección de Entrega</Label>
                                 <textarea
                                     id="dir_ent"
@@ -249,7 +249,7 @@ const submit = () => {
                                 <div v-if="form.errors.dir_ent" class="text-sm text-red-600">
                                     {{ form.errors.dir_ent }}
                                 </div>
-                            </div>
+                            </div> -->
                         </div>
 
                         <!-- Comentarios -->

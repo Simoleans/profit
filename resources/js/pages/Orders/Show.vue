@@ -147,9 +147,9 @@ const generateWhatsAppMessage = () => {
     }
 
     // Dirección de entrega si existe
-    if (props.order.dir_ent) {
+    /* if (props.order.dir_ent) {
         message += `*Dirección de Entrega:* ${props.order.dir_ent}\n\n`
-    }
+    } */
 
     message += `Generado el ${formatDate(new Date())}`
 
