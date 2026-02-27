@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class ClientTemp extends Model
 {
@@ -48,7 +49,7 @@ class ClientTemp extends Model
     // Scope para clientes temporales de usuarios normales
     public function scopeClientTempWithUser($query, $search)
     {
-        $user = \Illuminate\Support\Facades\Auth::user();
+        $user = Auth::user();
         $clients = ClientTemp::with('media')
             ->where('co_ven', $user->co_ven)
             ->when($search, function ($query, $search) {
@@ -65,7 +66,7 @@ class ClientTemp extends Model
     // Scope para clientes temporales de administradores
     public function scopeClientTempWithAdmin($query, $search)
     {
-        $user = \Illuminate\Support\Facades\Auth::user();
+        $user = Auth::user();
         $clients = ClientTemp::with('media')
             ->when($search, function ($query, $search) {
                 return $query->where('cli_des', 'like', "%{$search}%")

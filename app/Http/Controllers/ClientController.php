@@ -77,8 +77,8 @@ class ClientController extends Controller
         // Tab de facturas sin retenciones
         elseif($tab === 'retenciones') {
             // Determinar rol del usuario
-            $vendedor = ($user->rol == 0) ? true : null;
-            $supervisor = ($user->rol == 1) ? true : null;
+            $vendedor = ($user->isVendedor()) ? true : null;
+            $supervisor = ($user->isSupervisor()) ? true : null;
 
             $facturasData = $facturaService->obtenerDetalleFacturas($vendedor, $supervisor, $user);
 
@@ -128,7 +128,7 @@ class ClientController extends Controller
         }
         // Tabs de clientes procesados y temporales
         else {
-            if($user->rol == 0){
+            if($user->isVendedor()){
                 if($tab === 'temp') {
                     $clients = ClientTemp::clientTempWithUser($search);
                 } else {
