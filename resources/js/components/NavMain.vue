@@ -16,7 +16,7 @@ const page = usePage();
         <SidebarGroupLabel>Plataforma</SidebarGroupLabel>
         <SidebarMenu>
             <SidebarMenuItem v-for="item in items" :key="item.title">
-                <SidebarMenuButton as-child :is-active="urlIsActive(item.href, page.url)" :tooltip="item.title">
+                <SidebarMenuButton v-if="item.show" as-child :is-active="urlIsActive(item.href, page.url)" :tooltip="item.title">
                     <Link :href="item.href">
                         <component :is="item.icon" />
                         <span class="text-[15px] font-semibold">{{ item.title }}</span>

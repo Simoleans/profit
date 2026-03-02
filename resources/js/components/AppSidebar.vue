@@ -8,32 +8,41 @@ import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
 import { LayoutGrid, Users, UserCheck, Package, ShoppingCart } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
+import { usePage } from '@inertiajs/vue3';
+
+const page = usePage();
+const auth = page.props.auth;
 
 const mainNavItems: NavItem[] = [
     {
         title: 'Inicio',
         href: dashboard(),
         icon: LayoutGrid,
+        show: true,
     },
     {
         title: 'Usuarios',
         href: '/users',
         icon: Users,
+        show: auth.user.rol == 1,
     },
     {
         title: 'Mis Clientes',
         href: clientsIndex.url(),
         icon: UserCheck,
+        show: true,
     },
     {
         title: 'Artículos',
         href: '/articles',
         icon: Package,
+        show: true,
     },
     {
         title: 'Pedidos',
         href: '/orders',
         icon: ShoppingCart,
+        show: true,
     },
 ];
 </script>
