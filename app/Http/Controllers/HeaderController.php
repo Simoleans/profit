@@ -263,16 +263,17 @@ class HeaderController extends Controller
      */
     public function show($fact_num)
     {
-        // Buscar el pedido directamente por fact_num y vendedor
-        $header = Header::where('fact_num', $fact_num)
-            ->where('co_ven', Auth::user()->co_ven)
-            ->firstOrFail();
+        $query = Header::where('fact_num', $fact_num);
 
+        // Solo filtrar por vendedor si NO es admin/supervisor
+        if (Auth::user()->isVendedor()) {
+            $query->where('co_ven', Auth::user()->co_ven);
+        }
+
+        $header = $query->firstOrFail();
 
         $header->load(['client', 'rows.article']);
 
-
-        // Cargar vendedor manualmente desde MySQL
         $seller = User::where('co_ven', $header->co_ven)->first();
         $header->seller = $seller;
 
@@ -437,12 +438,12 @@ class HeaderController extends Controller
     {
         $query = $request->get('q', '');
 
-        // Temporalmente sin restricción de vendedor para debugging
         $clients = Client::where(function($q) use ($query) {
                 $q->where('cli_des', 'like', "%{$query}%")
                   ->orWhere('co_cli', 'like', "%{$query}%");
             })
-            ->where('co_cli','!=','')
+            ->where('co_cli', '!=', '')
+            ->where('co_ven', Auth::user()->co_ven)
             ->limit(20)
             ->get(['co_cli', 'cli_des', 'rif', 'co_ven']);
 
