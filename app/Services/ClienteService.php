@@ -9,7 +9,7 @@ class ClienteService
     /**
      * Obtener clientes sin pedidos.
      *
-     * @param string $vendedor
+     * @param string|array|null $vendedor Código de vendedor o array de códigos
      * @return \Illuminate\Support\Collection
      */
     public function obtenerClientesSinPedidos($vendedor = null)
@@ -35,9 +35,13 @@ class ClienteService
                     ->limit(1);
             });
 
-        // Filtro por vendedor (usuario en sesión)
+        // Filtro por vendedor/supervisor (si aplica)
         if ($vendedor) {
-            $query->where('cli.co_ven', $vendedor);
+            if (is_array($vendedor)) {
+                $query->whereIn('cli.co_ven', $vendedor);
+            } else {
+                $query->where('cli.co_ven', $vendedor);
+            }
         }
 
         return $query->orderBy('cli.cli_des')
@@ -49,7 +53,7 @@ class ClienteService
      * Obtener clientes sin ventas por más de 3 meses con paginación
      * Ordenado por el promedio mensual de las ventas del último año desde la última fecha de compra
      *
-     * @param string $vendedor
+     * @param string|array|null $vendedor Código de vendedor o array de códigos
      * @param int $perPage
      * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
@@ -70,9 +74,13 @@ class ClienteService
             ->where('cli.inactivo', 0)
             ->whereRaw('DATEDIFF(MM, (SELECT TOP 1 fec_emis FROM factura WHERE co_cli = cli.co_cli ORDER BY fec_emis DESC), GETDATE()) > 3');
 
-        // Filtro por vendedor (usuario en sesión)
+        // Filtro por vendedor/supervisor (si aplica)
         if ($vendedor) {
-            $query->where('cli.co_ven', $vendedor);
+            if (is_array($vendedor)) {
+                $query->whereIn('cli.co_ven', $vendedor);
+            } else {
+                $query->where('cli.co_ven', $vendedor);
+            }
         }
 
         return $query->groupBy('cli.co_cli', 'cli.cli_des')

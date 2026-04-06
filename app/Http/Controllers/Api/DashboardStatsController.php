@@ -7,12 +7,14 @@ use Illuminate\Http\Request;
 use App\Models\Client;
 use App\Models\Article;
 use App\Models\Header;
+use App\Models\Supervisor;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use App\Services\FacturaService;
 use App\Services\CuentasXCobrarService;
 use App\Services\ClienteService;
 use App\Enums\UserRole;
+use Illuminate\Support\Facades\DB;
 
 class DashboardStatsController extends Controller
 {
@@ -42,11 +44,16 @@ class DashboardStatsController extends Controller
                 ->limit(5)
                 ->count(); */
         } elseif ($user->isSupervisor()) {
+            $totalClients = Client::active()
+            ->whereExists(function ($query) use ($user) {
+                $query->select(DB::raw(1))
+                    ->from('vendedor as v')
+                    ->whereColumn('v.co_ven', 'clientes.co_ven')
+                    ->where('v.co_sup', $user->co_ven);
+            })
+            ->count();
+        }else{
             $totalClients = Client::active()->count();
-            /* $newClientsThisMonth = Client::active()
-                ->orderBy('co_cli', 'desc')
-                ->limit(10)
-                ->count(); */
         }
 
         return response()->json([
@@ -171,9 +178,13 @@ class DashboardStatsController extends Controller
     {
         $user = Auth::user();
 
-        // Si es administrador, traer todos los clientes sin pedidos
-        // Si es vendedor, solo los suyos
-        $vendedor = $user->rol == 0 ? $user->co_ven : null;
+        $vendedor = null;
+
+        if ($user->isVendedor()) {
+            $vendedor = $user->co_ven;
+        } elseif ($user->isSupervisor()) {
+            $vendedor = Supervisor::where('co_sup', $user->co_ven)->pluck('co_ven')->toArray();
+        }
 
         // Clave de caché única por vendedor
         $cacheKey = "clientes_sin_pedidos_vendedor_{$vendedor}";
@@ -198,12 +209,16 @@ class DashboardStatsController extends Controller
     {
         $user = Auth::user();
 
-        // Si es administrador, traer todos los clientes inactivos
-        // Si es vendedor, solo los suyos
-        $vendedor = $user->rol == 0 ? $user->co_ven : null;
-
         // Obtener parámetro de paginación (por defecto 10 items por página)
         $perPage = $request->input('per_page', 10);
+
+        $vendedor = null;
+
+        if ($user->isVendedor()) {
+            $vendedor = $user->co_ven;
+        } elseif ($user->isSupervisor()) {
+            $vendedor = Supervisor::where('co_sup', $user->co_ven)->pluck('co_ven')->toArray();
+        }
 
         $clientes = $this->clienteService->obtenerClientesSinVentasPor3Meses($vendedor, $perPage);
 

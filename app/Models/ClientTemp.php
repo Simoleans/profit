@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ClientTemp extends Model
 {
@@ -52,6 +53,27 @@ class ClientTemp extends Model
         $user = Auth::user();
         $clients = ClientTemp::with('media')
             ->where('co_ven', $user->co_ven)
+            ->when($search, function ($query, $search) {
+                return $query->where('cli_des', 'like', "%{$search}%")
+                           ->orWhere('co_cli', 'like', "%{$search}%");
+            })
+            ->orderBy('cli_des')
+            ->paginate(10)
+            ->withQueryString();
+
+        return $clients;
+    }
+
+    public function scopeclientTempWithSupervisor($query, $search)
+    {
+        $user = Auth::user();
+        $clients = ClientTemp::with('media')
+            ->whereExists(function ($query) use ($user) {
+                $query->select(DB::raw(1))
+                    ->from('vendedor as v')
+                    ->whereColumn('v.co_ven', 'clientes_temp.co_ven')
+                    ->where('v.co_sup', $user->co_ven);
+            })
             ->when($search, function ($query, $search) {
                 return $query->where('cli_des', 'like', "%{$search}%")
                            ->orWhere('co_cli', 'like', "%{$search}%");

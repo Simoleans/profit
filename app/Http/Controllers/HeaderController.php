@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Header;
 use App\Models\Row;
-use App\Models\{Client, User, Article};
+use App\Models\{Client, User, Article, Seller};
 use App\Mail\OrderNotificationMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -82,11 +82,17 @@ class HeaderController extends Controller
      */
     public function index(Request $request)
     {
+        $user = Auth::user();
+
         $query = Header::with(['client', 'rows'])
-            ->where('status', 'P')
-            ->when(Auth::user()->rol == UserRole::VENDEDOR, function ($query) {
-                $query->where('co_ven', Auth::user()->co_ven);
-            });
+            ->where('status', 'P');
+
+        if ($user->isVendedor()) {
+            $query->where('co_ven', $user->co_ven);
+        } elseif ($user->isSupervisor()) {
+            $vendedores = Seller::where('co_sup', $user->co_ven)->pluck('co_ven');
+            $query->whereIn('co_ven', $vendedores);
+        }
 
 
         // Aplicar filtro de búsqueda si existe
@@ -438,14 +444,22 @@ class HeaderController extends Controller
     {
         $query = $request->get('q', '');
 
-        $clients = Client::where(function($q) use ($query) {
+        $user = Auth::user();
+
+        $clientsQuery = Client::where(function($q) use ($query) {
                 $q->where('cli_des', 'like', "%{$query}%")
                   ->orWhere('co_cli', 'like', "%{$query}%");
             })
-            ->where('co_cli', '!=', '')
-            ->where('co_ven', Auth::user()->co_ven)
-            ->limit(20)
-            ->get(['co_cli', 'cli_des', 'rif', 'co_ven']);
+            ->where('co_cli', '!=', '');
+
+        if ($user->isVendedor()) {
+            $clientsQuery->where('co_ven', $user->co_ven);
+        } elseif ($user->isSupervisor()) {
+            $vendedores = Seller::where('co_sup', $user->co_ven)->pluck('co_ven');
+            $clientsQuery->whereIn('co_ven', $vendedores);
+        }
+
+        $clients = $clientsQuery->limit(20)->get(['co_cli', 'cli_des', 'rif', 'co_ven']);
 
         return response()->json($clients);
     }

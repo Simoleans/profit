@@ -134,6 +134,13 @@ class ClientController extends Controller
                 } else {
                     $clients = Client::clientProcessedWithUser($search);
                 }
+
+            }elseif($user->isSupervisor()){
+                if($tab === 'temp') {
+                    $clients = ClientTemp::clientTempWithSupervisor($search);
+                } else {
+                    $clients = Client::clientProcessedWithSupervisor($search);
+                }
             }else{ //es admin
                 if($tab === 'temp') {
                     $clients = ClientTemp::clientTempWithAdmin($search);

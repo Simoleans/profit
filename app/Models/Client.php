@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
 class Client extends Model
 {
     protected $connection = 'sqlsrv';
@@ -114,6 +116,42 @@ class Client extends Model
             ->when($search, function ($query, $search) {
                 return $query->where('cli_des', 'like', "%{$search}%")
                            ->orWhere('co_cli', 'like', "%{$search}%");
+            })
+            ->orderBy('cli_des')
+            ->paginate(10)
+            ->withQueryString();
+
+        return $clients;
+    }
+
+    // Scope para clientes procesados (con co_cli no vacío) para supervisores
+    public function scopeClientProcessedWithSupervisor($query, $search)
+    {
+        $user = Auth::user();
+        $clients = Client::query()
+            ->where('co_cli', '!=', '')
+            ->whereExists(function ($query) use ($user) {
+                $query->select(DB::raw(1))
+                    ->from('vendedor as v')
+                    ->whereColumn('v.co_ven', 'clientes.co_ven')
+                    ->where('v.co_sup', $user->co_ven);
+            })
+            ->orderBy('cli_des')
+            ->paginate(10)
+            ->withQueryString();
+
+        return $clients;
+    }
+
+    public function scopeClientWithSupervisor($query, $search)
+    {
+        $user = Auth::user();
+        $clients = Client::query()
+            ->whereExists(function ($query) use ($user) {
+                $query->select(DB::raw(1))
+                    ->from('vendedor as v')
+                    ->whereColumn('v.co_ven', 'clientes.co_ven')
+                    ->where('v.co_sup', $user->co_ven);
             })
             ->orderBy('cli_des')
             ->paginate(10)
